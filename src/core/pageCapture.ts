@@ -95,15 +95,24 @@ function inferYear(month: number, day: number, now: number): number {
 
 export function extractRequirements(text: string): ApplicationRequirements {
   const lower = text.toLowerCase();
-  const wordCounts = [...lower.matchAll(/(\d{2,4})[\s-]*(?:word|words)\b/g)]
-    .map((match) => Number(match[1]))
-    .filter((count) => count >= 100 && count <= 5000);
+  // A page usually repeats the same word limit (header and form label), so the
+  // distinct limits are a better essay count than the raw number of mentions.
+  const wordCounts = [
+    ...new Set(
+      [...lower.matchAll(/(\d{2,4})[\s-]*(?:word|words)\b/g)]
+        .map((match) => Number(match[1]))
+        .filter((count) => count >= 100 && count <= 5000),
+    ),
+  ];
 
   const essayMentioned = /\bessay|personal statement|written response|statement of purpose\b/.test(lower);
-  const essayCountMatch = lower.match(/\b(two|three|2|3)\s+essays?\b/);
+  // An explicit count ("submit one 500 word essay") overrides the inference.
+  const statedCount = lower.match(/\b(one|two|three|four|1|2|3|4)\b[^.]{0,40}?\bessays?\b/);
+  const NUMBER_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4 };
+
   let essayCount = 0;
-  if (wordCounts.length > 0) essayCount = wordCounts.length;
-  else if (essayCountMatch) essayCount = /two|2/.test(essayCountMatch[1]) ? 2 : 3;
+  if (statedCount) essayCount = NUMBER_WORDS[statedCount[1]] ?? Number(statedCount[1]);
+  else if (wordCounts.length > 0) essayCount = wordCounts.length;
   else if (essayMentioned) essayCount = 1;
 
   const recMatch = lower.match(/\b(\d|one|two|three)\s+(?:letters?|recommendations?)\b/) ??
@@ -120,7 +129,7 @@ export function extractRequirements(text: string): ApplicationRequirements {
 
   return {
     essayCount,
-    essayWordCounts: wordCounts.length > 0 ? wordCounts : essayCount > 0 ? [500] : [],
+    essayWordCounts: wordCounts.length > 0 ? wordCounts.slice(0, Math.max(1, essayCount)) : essayCount > 0 ? [500] : [],
     essayTopics: essayCount > 0 ? Array.from({ length: essayCount }, () => 'general') : [],
     recommendationLetters,
     transcriptRequired: /\btranscript\b/.test(lower),
@@ -145,7 +154,8 @@ export function extractEligibility(text: string): EligibilityRule[] {
       field: 'academics.gpa',
       operator: 'gte',
       value,
-      label: `${value.toFixed(1)} GPA or higher`,
+      // Not `toFixed(1)`: a stated 3.25 minimum must not be shown as 3.3.
+      label: `${value} GPA or higher`,
       weight: 'required',
     });
   }

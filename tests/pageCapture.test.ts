@@ -55,6 +55,17 @@ describe('extractRequirements', () => {
     expect(requirements.interviewRequired).toBe(false);
   });
 
+  it('does not double-count a word limit the page repeats', () => {
+    const repeated = 'Submit one 500 word essay. Essay prompt (500 words): describe your leadership.';
+    const requirements = extractRequirements(repeated);
+    expect(requirements.essayCount).toBe(1);
+    expect(requirements.essayWordCounts).toEqual([500]);
+  });
+
+  it('reads an explicitly stated essay count', () => {
+    expect(extractRequirements('Applicants submit two essays of 400 words each.').essayCount).toBe(2);
+  });
+
   it('recognizes portfolio and interview rounds', () => {
     const requirements = extractRequirements('Submit a portfolio; finalists complete an interview.');
     expect(requirements.portfolioRequired).toBe(true);
@@ -68,6 +79,12 @@ describe('extractEligibility', () => {
     const gpa = rules.find((rule) => rule.field === 'academics.gpa');
     expect(gpa?.value).toBe(3.25);
     expect(gpa?.weight).toBe('required');
+  });
+
+  it('states a fractional GPA minimum exactly as written', () => {
+    const gpa = extractEligibility('Requires a minimum 3.25 GPA.').find((rule) => rule.field === 'academics.gpa');
+    expect(gpa?.value).toBe(3.25);
+    expect(gpa?.label).toBe('3.25 GPA or higher');
   });
 
   it('captures a citizenship restriction', () => {
