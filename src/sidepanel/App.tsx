@@ -17,7 +17,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'compare', label: 'Compare' },
   { id: 'plan', label: 'Plan' },
   { id: 'tracker', label: 'Tracker' },
-  { id: 'page', label: 'This page' },
+  { id: 'page', label: 'Page' },
 ];
 
 export function App() {

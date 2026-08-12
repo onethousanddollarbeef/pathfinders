@@ -53,7 +53,9 @@ export function PlanView({ store }: { store: AppStore }) {
           </div>
         </div>
         <label className="field" style={{ marginTop: 8 }}>
-          Hours per week: <strong>{weeklyHours}</strong>
+          <span>
+            Hours per week: <strong>{weeklyHours}</strong>
+          </span>
           <input
             type="range"
             min={1}

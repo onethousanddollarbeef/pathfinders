@@ -442,7 +442,9 @@ export function ProfileView({ store }: { store: AppStore }) {
 
       <Section title="Capacity and goals" subtitle="Drives how much the planner schedules per week.">
         <label className="field">
-          Hours per week for applications: <strong>{profile.weeklyHoursAvailable}</strong>
+          <span>
+            Hours per week for applications: <strong>{profile.weeklyHoursAvailable}</strong>
+          </span>
           <input
             type="range"
             min={1}
