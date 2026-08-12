@@ -46,12 +46,30 @@ Click the toolbar icon to open the side panel.
 Other commands:
 
 ```bash
-npm test          # 119 unit tests (vitest)
+npm test          # 128 unit tests (vitest)
 npm run typecheck # tsc --noEmit
 npm run lint      # eslint
 npm run dev       # rebuild on change; use Reload in chrome://extensions to pick up changes
 node scripts/generate-icons.mjs  # regenerate the PNG icons
 ```
+
+### Browser smoke test
+
+`scripts/smoke-test.mjs` loads the built extension into a real browser and runs 45 end-to-end checks: the service
+worker starts, the side panel renders every tab with computed numbers, matches carry explanations, the comparison
+table highlights winners, the plan ranks and explains its ordering, and the content script fills
+`demo/application-form.html` — including asserting that the password and SSN fields stay empty.
+
+```bash
+npm run smoke:setup   # once: downloads Chrome for Testing to /tmp/browsers
+npm run build
+npm run smoke                       # or: SMOKE_SCREENSHOTS=1 npm run smoke
+```
+
+It needs Chrome for Testing or Chromium rather than branded Google Chrome: since Chrome 137, branded builds ignore
+`--load-extension` entirely (`--load-extension is not allowed in Google Chrome, ignoring.`), so an extension loaded that
+way silently never appears. For interactive testing in branded Chrome, load `dist/` through
+`chrome://extensions` → **Load unpacked** instead.
 
 ## Architecture
 
@@ -72,6 +90,8 @@ src/
   sidepanel/      React UI (Home, Profile, Discover, Compare, Plan, Tracker, This page)
   content/        Content script + shadow-DOM overlay
   background/     Service worker: side panel, context menus, deadline notifications
+demo/           Application-form fixture used by the browser smoke test
+scripts/        Icon generation and the browser smoke test
 ```
 
 The engine is deliberately separated from Chrome APIs: `src/core` imports nothing from `chrome.*` except in

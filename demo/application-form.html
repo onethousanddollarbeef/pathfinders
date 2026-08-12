@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Horizon Community Scholarship — Application</title>
+    <meta
+      name="description"
+      content="The Horizon Foundation awards $2,500 to graduating seniors each year. Deadline: March 15, 2026."
+    />
+    <style>
+      :root { color-scheme: light; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        background: #f4f5f9;
+        color: #16182b;
+      }
+      header { background: #14532d; color: #fff; padding: 24px 32px; }
+      header h1 { margin: 0 0 4px; font-size: 22px; }
+      header p { margin: 0; opacity: 0.85; font-size: 14px; }
+      main { max-width: 720px; margin: 24px auto 60px; padding: 0 16px; }
+      section { background: #fff; border: 1px solid #e3e4ee; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+      h2 { font-size: 15px; margin: 0 0 14px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      label { display: block; font-size: 12px; font-weight: 600; color: #4b4d63; margin-bottom: 12px; }
+      input, select, textarea {
+        display: block; width: 100%; margin-top: 4px; padding: 8px 10px; font: inherit; font-size: 13px;
+        border: 1px solid #d5d6e2; border-radius: 8px; background: #fff; box-sizing: border-box;
+      }
+      textarea { min-height: 110px; resize: vertical; }
+      fieldset { border: 1px solid #e3e4ee; border-radius: 8px; margin: 0 0 12px; padding: 10px 12px; }
+      legend { font-size: 12px; font-weight: 600; color: #4b4d63; }
+      fieldset label { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; font-weight: 500; }
+      fieldset input { width: auto; margin: 0; }
+      .note { font-size: 12px; color: #6b6d82; }
+      button { background: #14532d; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Horizon Community Scholarship</h1>
+      <p>
+        The Horizon Foundation awards $2,500 to graduating seniors each year. Application deadline: March 15, 2026.
+        Applicants must have a minimum 3.25 GPA, be U.S. citizens, and submit one 500 word essay along with two letters
+        of recommendation and an official transcript. Renewable for up to four years.
+      </p>
+    </header>
+
+    <main>
+      <p class="note">
+        Local test fixture for ScholarPath autofill: deliberately mixes labelled inputs, placeholder-only inputs,
+        selects, radios, a textarea essay prompt, and fields that must never be touched.
+      </p>
+
+      <form>
+        <section>
+          <h2>Applicant</h2>
+          <div class="row">
+            <label>First Name<input type="text" name="applicant_first_name" autocomplete="given-name" /></label>
+            <label>Last Name<input type="text" name="applicant_last_name" /></label>
+          </div>
+          <div class="row">
+            <label>Email Address<input type="email" name="email" /></label>
+            <label>Phone Number<input type="text" name="phone" /></label>
+          </div>
+          <label>Mailing Address<input type="text" name="address1" /></label>
+          <div class="row">
+            <label>City<input type="text" name="city" /></label>
+            <label for="state-select">State</label>
+            <select id="state-select" name="state">
+              <option value="">Select a state</option>
+              <option value="AZ">Arizona</option>
+              <option value="CA">California</option>
+              <option value="NY">New York</option>
+              <option value="TX">Texas</option>
+            </select>
+          </div>
+          <label><input type="text" placeholder="ZIP code" name="q_88" /></label>
+        </section>
+
+        <section>
+          <h2>Academics</h2>
+          <div class="row">
+            <label>Current School Name<input type="text" name="school" /></label>
+            <label>Expected Graduation Year<input type="text" name="grad_year" /></label>
+          </div>
+          <div class="row">
+            <label>Cumulative GPA<input type="text" name="gpa" /></label>
+            <label>SAT Total Score<input type="text" name="sat" /></label>
+          </div>
+          <label>Intended Major<input type="text" name="intendedMajor" /></label>
+          <fieldset>
+            <legend>Citizenship Status</legend>
+            <label><input type="radio" name="citizenship" value="citizen" /> U.S. Citizen</label>
+            <label><input type="radio" name="citizenship" value="pr" /> Permanent Resident</label>
+            <label><input type="radio" name="citizenship" value="other" /> Other</label>
+          </fieldset>
+        </section>
+
+        <section>
+          <h2>Background</h2>
+          <div class="row">
+            <label>Household Income<input type="text" name="household_income" /></label>
+            <label>Household Size<input type="text" name="household_size" /></label>
+          </div>
+          <fieldset>
+            <legend>Gender</legend>
+            <label><input type="radio" name="gender" value="female" /> Female</label>
+            <label><input type="radio" name="gender" value="male" /> Male</label>
+            <label><input type="radio" name="gender" value="nonbinary" /> Nonbinary</label>
+          </fieldset>
+          <label>Extracurricular Activities and Leadership Roles<textarea name="activities"></textarea></label>
+        </section>
+
+        <section>
+          <h2>Essay</h2>
+          <label>
+            Essay: describe a leadership experience that shaped you (500 words)
+            <textarea name="essay_1"></textarea>
+          </label>
+        </section>
+
+        <section>
+          <h2>Account security — must never be autofilled</h2>
+          <div class="row">
+            <label>Create a Password<input type="password" name="password" /></label>
+            <label>Social Security Number<input type="text" name="ssn" /></label>
+          </div>
+        </section>
+
+        <button type="button">Submit application</button>
+      </form>
+    </main>
+  </body>
+</html>
