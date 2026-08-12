@@ -9,6 +9,7 @@
 import { daysUntil } from '../core/dates';
 import { SEED_SCHOLARSHIPS } from '../data/scholarships';
 import { loadState } from '../core/storage';
+import { resolveDeadline } from '../core/tracker';
 import type { PanelToContentMessage } from '../shared/messages';
 
 const DEADLINE_ALARM = 'scholarpath:deadline-check';
@@ -114,8 +115,7 @@ async function notifyUpcomingDeadlines(): Promise<void> {
     .map((app) => {
       const scholarship = catalog.find((entry) => entry.id === app.scholarshipId);
       if (!scholarship) return undefined;
-      const days = daysUntil(app.deadlineOverride ?? scholarship.deadline);
-      return { scholarship, days };
+      return { scholarship, days: daysUntil(resolveDeadline(app, scholarship)) };
     })
     .filter((entry): entry is { scholarship: (typeof catalog)[number]; days: number } => Boolean(entry))
     .filter((entry) => entry.days >= 0 && entry.days <= 7)

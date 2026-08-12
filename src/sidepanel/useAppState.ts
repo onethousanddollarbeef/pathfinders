@@ -128,14 +128,18 @@ export function useAppState(): AppStore {
           if (current.applications.some((application) => application.scholarshipId === scholarshipId)) {
             return current;
           }
-          const scholarship = findScholarship(scholarshipId);
+          // Prefer the matched copy: its deadline has been rolled to the next
+          // cycle, so the generated task due dates are not already in the past.
+          const scholarship =
+            matches.find((match) => match.scholarship.id === scholarshipId)?.scholarship ??
+            findScholarship(scholarshipId);
           if (!scholarship) return current;
           return {
             ...current,
             applications: [...current.applications, createTrackedApplication(scholarship, current.profile)],
           };
         }),
-      [commit, findScholarship],
+      [commit, findScholarship, matches],
     ),
 
     removeApplication: useCallback(

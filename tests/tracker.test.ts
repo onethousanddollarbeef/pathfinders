@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTrackedApplication, progress, setStatus, toggleTask, trackerStats } from '@/core/tracker';
+import { createTrackedApplication, progress, resolveDeadline, setStatus, toggleTask, trackerStats } from '@/core/tracker';
 import { makeProfile, makeScholarship, NOW } from './helpers';
 
 const scholarship = makeScholarship({
@@ -77,6 +77,32 @@ describe('progress', () => {
     const heaviest = [...saved.tasks].sort((a, b) => b.estimatedHours - a.estimatedHours)[0];
     const lightest = [...saved.tasks].sort((a, b) => a.estimatedHours - b.estimatedHours)[0];
     expect(progress(toggleTask(saved, heaviest.id))).toBeGreaterThan(progress(toggleTask(saved, lightest.id)));
+  });
+});
+
+describe('resolveDeadline', () => {
+  it('agrees with Discover by rolling a passed annual deadline forward', () => {
+    const annual = makeScholarship({ deadline: '2025-03-01', recurring: true });
+    const application = createTrackedApplication(annual, makeProfile(), NOW);
+    expect(resolveDeadline(application, annual, NOW)).toBe('2026-03-01');
+  });
+
+  it('leaves a one-off deadline in the past so it reads as missed', () => {
+    const once = makeScholarship({ deadline: '2025-03-01', recurring: false });
+    const application = createTrackedApplication(once, makeProfile(), NOW);
+    expect(resolveDeadline(application, once, NOW)).toBe('2025-03-01');
+  });
+
+  it('lets a student-entered date win', () => {
+    const annual = makeScholarship({ deadline: '2025-03-01', recurring: true });
+    const application = { ...createTrackedApplication(annual, makeProfile(), NOW), deadlineOverride: '2026-05-09' };
+    expect(resolveDeadline(application, annual, NOW)).toBe('2026-05-09');
+  });
+
+  it('does not report a recurring award as overdue', () => {
+    const annual = makeScholarship({ deadline: '2025-03-01', recurring: true });
+    const stats = trackerStats([createTrackedApplication(annual, makeProfile(), NOW)], [annual], NOW);
+    expect(stats.overdue).toHaveLength(0);
   });
 });
 

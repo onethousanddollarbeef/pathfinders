@@ -5,7 +5,7 @@
  * treat tracker state as immutable and persist it with a single write.
  */
 
-import { daysUntil } from './dates';
+import { daysUntil, effectiveDeadline } from './dates';
 import { generateTasks } from './planner';
 import { averageAward } from './matching';
 import type {
@@ -25,6 +25,20 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rejected: 'Not selected',
   skipped: 'Skipped',
 };
+
+/**
+ * The deadline to show and count against: an override the student entered wins,
+ * otherwise the scholarship's own date rolled to the next cycle if it recurs.
+ * Discover and the planner do the same, so every surface agrees on the date.
+ */
+export function resolveDeadline(
+  application: TrackedApplication,
+  scholarship: Scholarship,
+  now: number = Date.now(),
+): string {
+  if (application.deadlineOverride) return application.deadlineOverride;
+  return effectiveDeadline(scholarship.deadline, scholarship.recurring, now);
+}
 
 export function createTrackedApplication(
   scholarship: Scholarship,
@@ -142,8 +156,7 @@ export function trackerStats(
     if (application.status === 'awarded') stats.wonValue += application.awardAmount ?? averageAward(scholarship);
 
     if (application.status === 'saved' || application.status === 'started') {
-      const deadline = application.deadlineOverride ?? scholarship.deadline;
-      const days = daysUntil(deadline, now);
+      const days = daysUntil(resolveDeadline(application, scholarship, now), now);
       if (days < 0) stats.overdue.push({ scholarship, application, days });
       else if (days <= 7) stats.dueSoon.push({ scholarship, application, days });
     }

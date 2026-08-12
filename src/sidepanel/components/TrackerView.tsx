@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { formatDeadline } from '../../core/dates';
 import { averageAward } from '../../core/matching';
-import { STATUS_LABELS, progress, trackerStats } from '../../core/tracker';
+import { STATUS_LABELS, progress, resolveDeadline, trackerStats } from '../../core/tracker';
 import { Chip, EmptyState, Progress, money } from './common';
 import type { AppStore } from '../useAppState';
 import type { ApplicationStatus, Scholarship, TrackedApplication } from '../../core/types';
@@ -48,7 +48,9 @@ export function TrackerView({ store }: { store: AppStore }) {
       scholarship: store.catalog.find((entry) => entry.id === application.scholarshipId),
     }))
     .filter((entry): entry is { application: TrackedApplication; scholarship: Scholarship } => Boolean(entry.scholarship))
-    .sort((a, b) => a.scholarship.deadline.localeCompare(b.scholarship.deadline));
+    .sort((a, b) =>
+      resolveDeadline(a.application, a.scholarship).localeCompare(resolveDeadline(b.application, b.scholarship)),
+    );
 
   return (
     <div className="view">
@@ -123,7 +125,7 @@ function ApplicationCard({
       <div className="spread" style={{ alignItems: 'flex-start' }}>
         <div>
           <h3>{scholarship.name}</h3>
-          <div className="sponsor">{formatDeadline(application.deadlineOverride ?? scholarship.deadline)}</div>
+          <div className="sponsor">{formatDeadline(resolveDeadline(application, scholarship))}</div>
         </div>
         <Chip tone={statusTone(application.status)}>{STATUS_LABELS[application.status]}</Chip>
       </div>
