@@ -182,6 +182,29 @@ describe('detectFields', () => {
     expect(field.value).toContain('robotics team');
   });
 
+  it('reads an essay prompt as an essay even when the field name is generic', () => {
+    render(`
+      <section>
+        <h2>Essay</h2>
+        <label>
+          Essay: describe a leadership experience that shaped you (500 words)
+          <textarea name="essay_1"></textarea>
+        </label>
+      </section>
+    `);
+    const [field] = detectFields(document, profile);
+    expect(field.key).toBe('essay');
+    expect(field.value).toContain('robotics team');
+  });
+
+  it('keeps the activities textarea separate from the essay', () => {
+    render(`
+      <label>Extracurricular Activities and Leadership Roles<textarea name="activities"></textarea></label>
+      <label>Essay: tell us about a leadership experience<textarea name="essay_1"></textarea></label>
+    `);
+    expect(detectFields(document, profile).map((field) => field.key)).toEqual(['activities', 'essay']);
+  });
+
   it('skips hidden fields', () => {
     render(`<label for="fn">First Name</label><input id="fn" style="display:none" />`);
     expect(detectFields(document, profile)).toHaveLength(0);

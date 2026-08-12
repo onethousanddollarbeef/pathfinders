@@ -314,10 +314,12 @@ function firstMatchIndex(patterns: RegExp[], text: string): number {
  * the developer's intent (the autocomplete attribute) outrank ambient page text.
  */
 export function guessField(signals: FieldSignals): FieldGuess | undefined {
+  // Strongest signal first: each candidate stops at its best-scoring evidence,
+  // so checking a weak signal earlier would let it win on a tie it should lose.
   const weighted: { text: string; weight: number; source: string }[] = [
+    { text: signals.label, weight: 0.95, source: 'label' },
     { text: humanize(signals.name), weight: 0.9, source: 'field name' },
     { text: humanize(signals.id), weight: 0.85, source: 'field id' },
-    { text: signals.label, weight: 0.95, source: 'label' },
     { text: signals.placeholder, weight: 0.7, source: 'placeholder' },
     { text: signals.context, weight: 0.45, source: 'nearby text' },
   ];
