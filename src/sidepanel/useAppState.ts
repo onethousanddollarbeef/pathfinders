@@ -12,6 +12,8 @@ import { matchAll } from '../core/matching';
 import { buildPlan } from '../core/planner';
 import { createTrackedApplication, setStatus, toggleTask } from '../core/tracker';
 import { loadState, saveState, subscribeToState } from '../core/storage';
+import { getSession, pullState, pushState, signIn, signOut, signUp } from '../core/supabase';
+import type { SupabaseSession } from '../core/supabase';
 import type { AppState, Settings } from '../core/storage';
 import type {
   ApplicationStatus,
@@ -38,15 +40,46 @@ export interface AppStore {
   addCustomScholarship: (scholarship: Scholarship) => void;
   removeCustomScholarship: (scholarshipId: string) => void;
   dismiss: (scholarshipId: string) => void;
+  session: SupabaseSession | undefined;
+  syncStatus: 'local' | 'syncing' | 'synced' | 'error';
+  syncError: string | undefined;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<string>;
+  signOut: () => Promise<void>;
 }
 
 export function useAppState(): AppStore {
   const [state, setState] = useState<AppState | undefined>(undefined);
+  const [session, setSession] = useState<SupabaseSession | undefined>(undefined);
+  const [syncStatus, setSyncStatus] = useState<'local' | 'syncing' | 'synced' | 'error'>('local');
+  const [syncError, setSyncError] = useState<string>();
 
   useEffect(() => {
     let active = true;
-    void loadState().then((loaded) => {
-      if (active) setState(loaded);
+    void Promise.all([loadState(), getSession()]).then(async ([loaded, restoredSession]) => {
+      if (!active) return;
+      setSession(restoredSession);
+      if (!restoredSession) {
+        setState(loaded);
+        return;
+      }
+      setSyncStatus('syncing');
+      try {
+        const remote = await pullState(restoredSession);
+        const next = remote ?? loaded;
+        if (remote) await saveState(remote);
+        else await pushState(restoredSession, loaded);
+        if (active) {
+          setState(next);
+          setSyncStatus('synced');
+        }
+      } catch (error) {
+        if (active) {
+          setState(loaded);
+          setSyncStatus('error');
+          setSyncError(error instanceof Error ? error.message : String(error));
+        }
+      }
     });
     const unsubscribe = subscribeToState((next) => setState(next));
     return () => {
@@ -60,9 +93,19 @@ export function useAppState(): AppStore {
       if (!current) return current;
       const next = updater(current);
       void saveState(next);
+      if (session) {
+        setSyncStatus('syncing');
+        void pushState(session, next).then(() => {
+          setSyncStatus('synced');
+          setSyncError(undefined);
+        }).catch((error: unknown) => {
+          setSyncStatus('error');
+          setSyncError(error instanceof Error ? error.message : String(error));
+        });
+      }
       return next;
     });
-  }, []);
+  }, [session]);
 
   const catalog = useMemo(
     () => [...SEED_SCHOLARSHIPS, ...(state?.customScholarships ?? [])],
@@ -107,6 +150,41 @@ export function useAppState(): AppStore {
     catalog,
     matches,
     plan,
+    session,
+    syncStatus,
+    syncError,
+
+    signIn: async (email, password) => {
+      setSyncStatus('syncing');
+      const nextSession = await signIn(email, password);
+      const local = state ?? await loadState();
+      const remote = await pullState(nextSession);
+      const next = remote ?? local;
+      if (remote) await saveState(remote);
+      else await pushState(nextSession, local);
+      setSession(nextSession);
+      setState(next);
+      setSyncStatus('synced');
+      setSyncError(undefined);
+    },
+
+    signUp: async (email, password) => {
+      const result = await signUp(email, password);
+      if (result.session) {
+        const local = state ?? await loadState();
+        await pushState(result.session, local);
+        setSession(result.session);
+        setSyncStatus('synced');
+      }
+      return result.message;
+    },
+
+    signOut: async () => {
+      await signOut(session);
+      setSession(undefined);
+      setSyncStatus('local');
+      setSyncError(undefined);
+    },
 
     updateProfile: useCallback(
       (updater) =>

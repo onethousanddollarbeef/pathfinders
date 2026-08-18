@@ -26,7 +26,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
           <h2 style={{ margin: 0 }}>Let's find your money</h2>
           <p className="small muted" style={{ margin: '6px 0' }}>
             Three steps: fill in your profile, review the matches that come back with reasons, then work the plan in
-            deadline order. Everything stays on this device.
+            deadline order. Sign in from Account to sync your work with the website.
           </p>
           <button type="button" className="btn primary" onClick={() => onNavigate('profile')}>
             Start your profile
