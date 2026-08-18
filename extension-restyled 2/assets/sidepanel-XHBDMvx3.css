@@ -1,0 +1,66 @@
+:root{--bg: #f7f7fb;--surface: #ffffff;--border: #e6e6ef;--text: #14142b;--muted: #6b7280;--accent: #4f46e5;--accent-soft: #eef2ff;--green: #047857;--green-soft: #ecfdf5;--amber: #b45309;--amber-soft: #fffbeb;--red: #b91c1c;--red-soft: #fef2f2;--radius: 10px;--shadow: 0 1px 2px rgba(17, 24, 39, .06), 0 4px 12px rgba(17, 24, 39, .04)}*{box-sizing:border-box}html,body,#root{height:100%;margin:0}body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5}.app{display:flex;flex-direction:column;height:100%;min-width:320px}.app-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}.app-header h1{font-size:14px;margin:0;font-weight:650;letter-spacing:.2px}.app-header .tagline{font-size:11px;opacity:.85}.app-header .spacer{flex:1}.tabs{display:flex;gap:2px;padding:6px 8px 0;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{border:none;background:transparent;color:var(--muted);padding:7px 6px;border-radius:8px 8px 0 0;cursor:pointer;font-size:11.5px;font-weight:550;white-space:nowrap;border-bottom:2px solid transparent}.tab:hover{background:var(--accent-soft);color:var(--accent)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}.tab .badge{background:var(--accent);color:#fff;border-radius:999px;padding:0 5px;font-size:10px;margin-left:4px}.view{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}.card h2,.card h3{margin:0 0 8px;font-size:13px;font-weight:650}.card h3{font-size:12px}.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:650;margin:0 0 6px}.muted{color:var(--muted)}.small{font-size:11px}.row{display:flex;align-items:center;gap:8px}.row.wrap{flex-wrap:wrap}.spread{display:flex;align-items:center;justify-content:space-between;gap:8px}.stack{display:flex;flex-direction:column;gap:8px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}button{font-family:inherit;font-size:12px}.btn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:550}.btn:hover{border-color:#cfcfe4;background:#fafaff}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:#4338ca}.btn.subtle{background:transparent;border-color:transparent;color:var(--accent);padding:4px 6px}.btn.danger{color:var(--red)}.btn:disabled{opacity:.5;cursor:not-allowed}.btn.tiny{padding:3px 7px;font-size:11px}label.field{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);font-weight:550}input[type=text],input[type=email],input[type=number],input[type=date],input[type=url],select,textarea{font-family:inherit;font-size:12px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 8px;width:100%}input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}textarea{resize:vertical;min-height:60px}.checkbox{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);font-weight:500}.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600;background:#f1f1f8;color:#4b5563;white-space:nowrap}.chip.accent{background:var(--accent-soft);color:var(--accent)}.chip.green{background:var(--green-soft);color:var(--green)}.chip.amber{background:var(--amber-soft);color:var(--amber)}.chip.red{background:var(--red-soft);color:var(--red)}.chip.removable{cursor:pointer}.progress{height:6px;background:#ececf6;border-radius:999px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--accent);border-radius:999px}.progress.green>span{background:var(--green)}.match-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 12px}.match-card h3{margin:0;font-size:13px;font-weight:650}.match-card .sponsor{font-size:11px;color:var(--muted)}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.metric{background:#fafafd;border:1px solid var(--border);border-radius:8px;padding:5px 6px;text-align:center}.metric .value{font-size:12px;font-weight:700;display:block}.metric .label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}.reasons{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}.reasons li{display:flex;gap:6px;font-size:11.5px;align-items:flex-start}.reasons .icon{flex:none;width:14px;text-align:center;font-weight:700}.reasons .met .icon{color:var(--green)}.reasons .not-met .icon{color:var(--red)}.reasons .unknown .icon{color:var(--amber)}table.compare{width:100%;border-collapse:collapse;font-size:11.5px}table.compare th,table.compare td{border-bottom:1px solid var(--border);padding:5px 6px;text-align:left;vertical-align:top}table.compare th.col-head{font-size:11px;font-weight:650}table.compare td.best{background:var(--green-soft);color:var(--green);font-weight:650}table.compare td.metric-label,table.compare th.metric-label{color:var(--muted);font-weight:600;white-space:nowrap}.bucket-title{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:650;margin-bottom:6px}.plan-item{border-left:3px solid var(--accent);padding-left:8px;margin-bottom:8px}.plan-item.skip{border-left-color:#d1d5db;opacity:.75}.plan-item.stretch{border-left-color:#f59e0b}.task{display:flex;gap:6px;align-items:flex-start;font-size:11.5px;padding:3px 0}.task input{margin-top:2px;width:auto}.task.done label{text-decoration:line-through;color:var(--muted)}.empty{text-align:center;color:var(--muted);padding:24px 12px;font-size:12px}.banner{border-radius:8px;padding:8px 10px;font-size:11.5px;border:1px solid}.banner.info{background:var(--accent-soft);border-color:#dbdbfa;color:#3730a3}.banner.warn{background:var(--amber-soft);border-color:#fde68a;color:var(--amber)}.banner.success{background:var(--green-soft);border-color:#a7f3d0;color:var(--green)}details summary{cursor:pointer;font-size:11.5px;color:var(--accent);font-weight:600;list-style:none}details summary::-webkit-details-marker{display:none}details summary:before{content:"▸ "}details[open] summary:before{content:"▾ "}.confidence-bar{width:34px;height:4px;border-radius:999px;background:#ececf6;overflow:hidden;flex:none}.confidence-bar>span{display:block;height:100%;background:var(--green)}.confidence-bar.low>span{background:var(--amber)}.link{color:var(--accent);text-decoration:none;font-weight:600}.link:hover{text-decoration:underline}input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* =========================================================
+   Scholarly theme pass — recolors/refonts the panel to match
+   the Scholarly website. Purely additive: no selector above
+   is removed or renamed, so every className the app renders
+   still resolves. Later rules of equal specificity win, so
+   this block overrides the defaults it needs to.
+   ========================================================= */
+:root{
+  --bg:#FBF5E9;
+  --surface:#FFFFFF;
+  --border:#ECE0C8;
+  --text:#241A10;
+  --muted:#8A7A63;
+  --accent:#C1502A;
+  --accent-soft:#FBEAD9;
+  --green:#6B8F63;
+  --green-soft:#EEF4E9;
+  --amber:#B4791F;
+  --amber-soft:#FBF0DC;
+  --red:#B23A2E;
+  --red-soft:#FBEAE6;
+  --radius:14px;
+  --shadow: 0 1px 2px rgba(40,24,10,.06), 0 8px 20px rgba(40,24,10,.06);
+}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+
+/* Header: swap the indigo gradient for the warm rust one */
+.app-header{
+  background:linear-gradient(135deg,#C1502A,#E08640);
+}
+.app-header h1{
+  font-family:'Fraunces',serif;
+  font-weight:650;
+  letter-spacing:.1px;
+}
+
+/* Editorial serif for headings and big numbers, matching the site */
+.card h2,.card h3,
+.match-card h3,
+.metric .value{
+  font-family:'Fraunces',serif;
+  font-weight:650;
+}
+
+/* Buttons: slightly rounder, warm neutral hover instead of cool gray */
+.btn{ border-radius:10px; }
+.btn:hover{ border-color:#DCCBA6; background:#FCF8EF; }
+.btn.primary:hover{ background:#A6421F; }
+
+/* Warm-neutral track/fill colors that were previously hardcoded gray */
+.metric{ background:#FCF8EF; }
+.progress{ background:#F1E6D0; }
+.confidence-bar{ background:#F1E6D0; }
+
+/* Info banner used cool indigo text/border by default */
+.banner.info{
+  border-color:#F0D2B0;
+  color:#7A3B18;
+}
+
+/* Stretch plan items used a hardcoded amber; tie it to the theme's amber */
+.plan-item.stretch{ border-left-color:var(--amber); }
