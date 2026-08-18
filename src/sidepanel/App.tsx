@@ -7,8 +7,9 @@ import { CompareView } from './components/CompareView';
 import { PlanView } from './components/PlanView';
 import { TrackerView } from './components/TrackerView';
 import { PageView } from './components/PageView';
+import { AccountView } from './components/AccountView';
 
-export type TabId = 'home' | 'profile' | 'discover' | 'compare' | 'plan' | 'tracker' | 'page';
+export type TabId = 'home' | 'profile' | 'discover' | 'compare' | 'plan' | 'tracker' | 'page' | 'account';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -18,6 +19,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'plan', label: 'Plan' },
   { id: 'tracker', label: 'Tracker' },
   { id: 'page', label: 'Page' },
+  { id: 'account', label: 'Account' },
 ];
 
 export function App() {
@@ -77,6 +79,7 @@ export function App() {
       {tab === 'plan' && <PlanView store={store} />}
       {tab === 'tracker' && <TrackerView store={store} />}
       {tab === 'page' && <PageView store={store} />}
+      {tab === 'account' && <AccountView store={store} />}
     </div>
   );
 }

@@ -158,7 +158,7 @@ export function ProfileView({ store }: { store: AppStore }) {
           </p>
         )}
         <p className="small muted" style={{ margin: '6px 0 0' }}>
-          Everything here stays on this device. Demographic fields are optional and only used to check eligibility rules.
+          Your data is cached on this device and, when signed in, synced securely to your Supabase account. Demographic fields are optional and only used to check eligibility rules.
         </p>
       </div>
 

@@ -4,7 +4,27 @@ A Chrome extension (Manifest V3) that treats scholarship hunting as a strategy p
 Students build one profile, get matches with the reasoning shown, compare awards on the axes that actually decide
 where to spend time, follow a prioritized plan, track every application, and autofill the forms they land on.
 
-Everything runs locally. There is no account, no backend, and no network request in the extension's own code paths.
+The extension works offline with a local cache. Users can also create an account or sign in to synchronize that cache
+through Supabase, allowing the companion website to use the same profile and application data.
+
+## Supabase setup
+
+The extension is configured for project `zrqfanveghxodzavjrkb` in `src/core/supabase.ts`. Before using account sync,
+open that project's **SQL Editor** and run `supabase/schema.sql`. It creates the `scholarpath_states` table and Row
+Level Security policies that only allow an authenticated user to access their own document.
+
+The website should authenticate against the same Supabase project and read/write the same row:
+
+```ts
+const { data } = await supabase
+  .from('scholarpath_states')
+  .select('state, updated_at')
+  .single();
+```
+
+The publishable key is intentionally bundled in the extension; Supabase publishable keys identify a project but do
+not bypass authorization. The RLS policies in `supabase/schema.sql` are what protect each student's data. Never put a
+Supabase secret/service-role key in the extension.
 
 ## What it does
 
@@ -85,7 +105,8 @@ src/
     profile.ts      Profile creation, completeness, highest-leverage gaps
     autofill.ts     Field detection, confidence scoring, safe value application
     pageCapture.ts  Reads a listing page into an editable catalog entry
-    storage.ts      chrome.storage.local persistence with migration + memory fallback
+    storage.ts      chrome.storage.local cache with migration + memory fallback
+    supabase.ts     authentication and per-user cloud state synchronization
   data/           Seed scholarship catalog with declarative rules
   sidepanel/      React UI (Home, Profile, Discover, Compare, Plan, Tracker, This page)
   content/        Content script + shadow-DOM overlay
@@ -118,6 +139,7 @@ supporting text snippets attached.
 
 ## Privacy
 
-The profile — including optional demographic answers used only for eligibility rules — lives in
-`chrome.storage.local` on your machine. It is read by the side panel and by the content script when you ask it to fill
-a form. Nothing is transmitted anywhere.
+The profile — including optional demographic answers used only for eligibility rules — is cached in
+`chrome.storage.local` on your machine. If you create an account or sign in, the complete app state is also sent to the
+configured Supabase project so it can be shared with the companion website. Row Level Security restricts each record
+to its authenticated owner. If you stay signed out, nothing is transmitted to Supabase.
