@@ -1,9 +1,8 @@
 /**
  * Persistence.
  *
- * Everything lives in `chrome.storage.local` on the student's own machine — no
- * account, no server, no network calls. A memory fallback keeps the same API
- * working in tests and in any context where the extension APIs are absent.
+ * State is cached in `chrome.storage.local` for offline use and tests. Signed-in
+ * users additionally synchronize this document through the Supabase adapter.
  */
 
 import { createEmptyProfile } from './profile';
