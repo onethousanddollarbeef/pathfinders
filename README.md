@@ -1,8 +1,8 @@
 # ScholarPath — Scholarship Strategy Extension
 
 A Chrome extension (Manifest V3) that treats scholarship hunting as a strategy problem rather than a search problem.
-Students build one profile, get matches with the reasoning shown, compare awards on the axes that actually decide
-where to spend time, follow a prioritized plan, track every application, and autofill the forms they land on.
+Students build one profile, get matches with the reasoning shown, follow a prioritized plan, track every application,
+and autofill the forms they land on.
 
 The extension works offline with a local cache. Users can also create an account or sign in to synchronize that cache
 through Supabase, allowing the companion website to use the same profile and application data.
@@ -31,12 +31,10 @@ Supabase secret/service-role key in the extension.
 | Capability | Where | How it works |
 | --- | --- | --- |
 | Create a student profile | **Profile** tab | Academics, financials, background, activities, essay library, recommenders, and weekly capacity. A completeness meter ranks what to answer next by the award dollars each blank field is gating. |
-| Find relevant scholarships | **Discover** tab | Every scholarship carries declarative eligibility rules; the engine evaluates them against the profile and filters by category, award floor, effort ceiling and deadline window. |
+| Find and prioritize relevant scholarships | **Discover** tab | Every scholarship carries declarative eligibility rules; the engine evaluates them against the profile, supports detailed filters, and combines the results with a plan ranked by expected dollars per hour. |
 | Understand why you qualify | "Why this match?" on every card | Each requirement is listed as met, failed, or unanswered with a sentence naming both the requirement and your value — for example, "Your 3.6 GPA meets the minimum of 3.0." |
-| Compare by award, deadline, eligibility and effort | **Compare** tab | Up to four awards side by side across award value, days remaining, fit score, estimated hours, odds, expected value and value per hour, with the winner of each row highlighted. |
-| Get a prioritized plan | **Plan** tab | Ranked by expected dollars per hour, adjusted for deadline urgency, momentum on started applications, and whether the work physically fits before the deadline at your stated weekly hours. |
 | Track saved / started / submitted | **Tracker** tab | Status pipeline with a generated task checklist, back-dated due dates, notes, hours invested and remaining, plus overdue and due-soon alerts. |
-| Fill out forms on sites you visit | **This page** tab, overlay, right-click menu, `Alt+Shift+F` | The matcher reads autocomplete attributes, field names, labels, placeholders and surrounding text, previews exactly what it would write where, then fills. |
+| Fill out forms on sites you visit | **Account** tab, overlay, right-click menu, `Alt+Shift+F` | Current-page tools read autocomplete attributes, field names, labels, placeholders and surrounding text, preview exactly what would be written, then fill. |
 
 ## Why value-per-hour instead of award size
 
@@ -108,7 +106,7 @@ src/
     storage.ts      chrome.storage.local cache with migration + memory fallback
     supabase.ts     authentication and per-user cloud state synchronization
   data/           Seed scholarship catalog with declarative rules
-  sidepanel/      React UI (Home, Profile, Discover, Compare, Plan, Tracker, This page)
+  sidepanel/      React UI (Home, Profile, Discover + Plan, Tracker, Account + current-page tools)
   content/        Content script + shadow-DOM overlay
   background/     Service worker: side panel, context menus, deadline notifications
 demo/           Application-form fixture used by the browser smoke test
@@ -133,7 +131,7 @@ matching, planning and autofill logic testable in plain Node.
 `src/data/scholarships.ts` contains 26 **illustrative** scholarships with plausible award sizes, deadlines,
 requirements and applicant pools. They are examples that exercise the engine across categories (merit, need, identity,
 field of study, local, service, military, employer), not scraped listings, and they should not be treated as live
-program data. Real programs get in via **Capture scholarship** on the "This page" tab, which reads award amounts,
+program data. Real programs get in via **Capture scholarship** under the **Account** tab, which reads award amounts,
 deadlines, GPA minimums and requirements out of the page you are viewing and hands you an editable draft with the
 supporting text snippets attached.
 
