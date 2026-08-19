@@ -1,5 +1,5 @@
 /**
- * Domain model for ScholarPath.
+ * Domain model for Nexus.
  *
  * Everything the extension does is derived from two objects: a `StudentProfile`
  * (what the student is) and a list of `Scholarship`s (what the world offers).

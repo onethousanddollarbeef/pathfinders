@@ -124,7 +124,7 @@ async function main() {
 
     const workerHandle = await worker.worker();
     const manifest = await workerHandle.evaluate(() => chrome.runtime.getManifest());
-    check('manifest is readable from the worker', manifest.name.startsWith('ScholarPath'), manifest.name);
+    check('manifest is readable from the worker', manifest.name.startsWith('Nexus'), manifest.name);
     check(
       'side panel is registered',
       manifest.side_panel?.default_path === 'sidepanel/index.html',

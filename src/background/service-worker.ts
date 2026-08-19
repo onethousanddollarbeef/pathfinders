@@ -28,12 +28,12 @@ chrome.runtime.onInstalled.addListener(async () => {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: CONTEXT_AUTOFILL,
-      title: 'Fill this form with my ScholarPath profile',
+      title: 'Fill this form with my Nexus profile',
       contexts: ['page', 'editable'],
     });
     chrome.contextMenus.create({
       id: CONTEXT_CAPTURE,
-      title: 'Save this scholarship to ScholarPath',
+      title: 'Save this scholarship to Nexus',
       contexts: ['page', 'link', 'selection'],
     });
   });

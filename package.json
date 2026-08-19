@@ -2,7 +2,7 @@
   "name": "scholar-strategy-extension",
   "private": true,
   "version": "0.1.0",
-  "description": "ScholarPath — a Chrome extension that helps students build a profile, find and compare scholarships, plan applications, track progress, and autofill application forms.",
+  "description": "Nexus — a Chrome extension that helps students build a profile, find and compare scholarships, plan applications, track progress, and autofill application forms.",
   "type": "module",
   "scripts": {
     "dev": "npm run build -- --mode development",

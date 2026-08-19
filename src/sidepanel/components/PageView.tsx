@@ -14,7 +14,7 @@ async function sendToActiveTab(message: PanelToContentMessage): Promise<ContentR
   } catch {
     return {
       ok: false,
-      error: 'ScholarPath cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
+      error: 'Nexus cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
     };
   }
 }

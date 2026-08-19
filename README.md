@@ -1,4 +1,4 @@
-# ScholarPath — Scholarship Strategy Extension
+# Nexus — Scholarship Strategy Extension
 
 A Chrome extension (Manifest V3) that treats scholarship hunting as a strategy problem rather than a search problem.
 Students build one profile, get matches with the reasoning shown, compare awards on the axes that actually decide

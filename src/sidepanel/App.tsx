@@ -49,7 +49,7 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <div>
-          <h1>ScholarPath</h1>
+          <h1>Nexus</h1>
           <div className="tagline">Find it, plan it, submit it.</div>
         </div>
         <span className="spacer" />

@@ -1,7 +1,7 @@
 /**
  * Generates the extension icons as PNGs with no image dependencies.
  *
- * Rasterizes a rounded indigo-violet tile with a white graduation cap, then
+ * Rasterizes a rounded chocolate-orange tile with a white graduation cap, then
  * encodes it by hand (PNG scanlines + zlib deflate + CRC32 chunks).
  */
 
@@ -77,8 +77,8 @@ function capAlpha(x, y, size) {
 function renderIcon(size) {
   const pixels = Buffer.alloc(size * size * 4);
   const radius = size * 0.22;
-  const topColor = [79, 70, 229];
-  const bottomColor = [124, 58, 237];
+  const topColor = [61, 40, 31];
+  const bottomColor = [228, 114, 63];
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {

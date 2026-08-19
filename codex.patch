@@ -1,0 +1,1447 @@
+diff --git a/README.md b/README.md
+index e1b29d3f38179919d44fea0eaf7862d542fdebf3..5db7360e5a8f16e4755f6c9cf2ea3c39964fbe75 100644
+--- a/README.md
++++ b/README.md
+@@ -1,26 +1,26 @@
+-# ScholarPath — Scholarship Strategy Extension
++# Nexus — Scholarship Strategy Extension
+ 
+ A Chrome extension (Manifest V3) that treats scholarship hunting as a strategy problem rather than a search problem.
+ Students build one profile, get matches with the reasoning shown, compare awards on the axes that actually decide
+ where to spend time, follow a prioritized plan, track every application, and autofill the forms they land on.
+ 
+ The extension works offline with a local cache. Users can also create an account or sign in to synchronize that cache
+ through Supabase, allowing the companion website to use the same profile and application data.
+ 
+ ## Supabase setup
+ 
+ The extension is configured for project `zrqfanveghxodzavjrkb` in `src/core/supabase.ts`. Before using account sync,
+ open that project's **SQL Editor** and run `supabase/schema.sql`. It creates the `scholarpath_states` table and Row
+ Level Security policies that only allow an authenticated user to access their own document.
+ 
+ The website should authenticate against the same Supabase project and read/write the same row:
+ 
+ ```ts
+ const { data } = await supabase
+   .from('scholarpath_states')
+   .select('state, updated_at')
+   .single();
+ ```
+ 
+ The publishable key is intentionally bundled in the extension; Supabase publishable keys identify a project but do
+ not bypass authorization. The RLS policies in `supabase/schema.sql` are what protect each student's data. Never put a
+diff --git a/demo/application-form.html b/demo/application-form.html
+index dcc26211776204485fa9ce00232a722ad8acc36a..59b9831da1de5b685986d1e56ecc1a16be7c0e44 100644
+--- a/demo/application-form.html
++++ b/demo/application-form.html
+@@ -27,51 +27,51 @@
+       input, select, textarea {
+         display: block; width: 100%; margin-top: 4px; padding: 8px 10px; font: inherit; font-size: 13px;
+         border: 1px solid #d5d6e2; border-radius: 8px; background: #fff; box-sizing: border-box;
+       }
+       textarea { min-height: 110px; resize: vertical; }
+       fieldset { border: 1px solid #e3e4ee; border-radius: 8px; margin: 0 0 12px; padding: 10px 12px; }
+       legend { font-size: 12px; font-weight: 600; color: #4b4d63; }
+       fieldset label { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; font-weight: 500; }
+       fieldset input { width: auto; margin: 0; }
+       .note { font-size: 12px; color: #6b6d82; }
+       button { background: #14532d; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+     </style>
+   </head>
+   <body>
+     <header>
+       <h1>Horizon Community Scholarship</h1>
+       <p>
+         The Horizon Foundation awards $2,500 to graduating seniors each year. Application deadline: March 15, 2026.
+         Applicants must have a minimum 3.25 GPA, be U.S. citizens, and submit one 500 word essay along with two letters
+         of recommendation and an official transcript. Renewable for up to four years.
+       </p>
+     </header>
+ 
+     <main>
+       <p class="note">
+-        Local test fixture for ScholarPath autofill: deliberately mixes labelled inputs, placeholder-only inputs,
++        Local test fixture for Nexus autofill: deliberately mixes labelled inputs, placeholder-only inputs,
+         selects, radios, a textarea essay prompt, and fields that must never be touched.
+       </p>
+ 
+       <form>
+         <section>
+           <h2>Applicant</h2>
+           <div class="row">
+             <label>First Name<input type="text" name="applicant_first_name" autocomplete="given-name" /></label>
+             <label>Last Name<input type="text" name="applicant_last_name" /></label>
+           </div>
+           <div class="row">
+             <label>Email Address<input type="email" name="email" /></label>
+             <label>Phone Number<input type="text" name="phone" /></label>
+           </div>
+           <label>Mailing Address<input type="text" name="address1" /></label>
+           <div class="row">
+             <label>City<input type="text" name="city" /></label>
+             <label for="state-select">State</label>
+             <select id="state-select" name="state">
+               <option value="">Select a state</option>
+               <option value="AZ">Arizona</option>
+               <option value="CA">California</option>
+               <option value="NY">New York</option>
+               <option value="TX">Texas</option>
+             </select>
+diff --git a/package.json b/package.json
+index 7020c5c850c7ba417cc40866d5c8b212a29c7af9..4aa964c24b83bb8f79a245f75c4109189a932870 100644
+--- a/package.json
++++ b/package.json
+@@ -1,30 +1,30 @@
+ {
+   "name": "scholar-strategy-extension",
+   "private": true,
+   "version": "0.1.0",
+-  "description": "ScholarPath — a Chrome extension that helps students build a profile, find and compare scholarships, plan applications, track progress, and autofill application forms.",
++  "description": "Nexus — a Chrome extension that helps students build a profile, find and compare scholarships, plan applications, track progress, and autofill application forms.",
+   "type": "module",
+   "scripts": {
+     "dev": "npm run build -- --mode development",
+     "build": "tsc --noEmit && vite build && vite build --config vite.content.config.ts",
+     "typecheck": "tsc --noEmit",
+     "test": "vitest run",
+     "test:watch": "vitest",
+     "smoke": "node scripts/smoke-test.mjs",
+     "smoke:setup": "npx @puppeteer/browsers install chrome@stable --path /tmp/browsers",
+     "lint": "eslint . --ext .ts,.tsx"
+   },
+   "devDependencies": {
+     "@types/chrome": "^0.0.268",
+     "@types/node": "^26.2.0",
+     "@types/react": "^18.3.3",
+     "@types/react-dom": "^18.3.0",
+     "@typescript-eslint/eslint-plugin": "^7.16.0",
+     "@typescript-eslint/parser": "^7.16.0",
+     "@vitejs/plugin-react": "^4.3.1",
+     "eslint": "^8.57.0",
+     "eslint-plugin-react-hooks": "^4.6.2",
+     "jsdom": "^24.1.0",
+     "puppeteer-core": "^25.6.0",
+     "typescript": "^5.5.3",
+     "vite": "^5.3.3",
+diff --git a/public/icons/icon-128.png b/public/icons/icon-128.png
+index 91777739f1baf054b93a91cdc99d39f34bed3fdb..32c7a5b740a079b35f7929097d4792f23b8c32c8 100644
+GIT binary patch
+literal 3847
+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
+KR&&nn_J06gvvSq|
+
+literal 2537
+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
+
+diff --git a/public/icons/icon-16.png b/public/icons/icon-16.png
+index 31c066978e6c92cb473f90e9674ff0b86dde891e..e6e7a78a53f1b17779d022fc078808be7818acc9 100644
+GIT binary patch
+delta 395
+zcmV;60d)R?1Em9yB!6s4L_t(|+MSa-PXbX8h3B8Byx%LjE~~g97=k2ZV?vCC014R`
+zi4hALs@qTu4Hb=zjg1uz4Gj&Ijg5_!e`d^VW=&RIADrqoUuNz(XTVBq!AWWxPP03P
+zt%X!0AI7F0!Hy9{$BbdW7{`H?z+owgqjCyWC9THQj4`QYVSifBfd?yF3sEB<rluaD
+zju9otj8VTBr-7BAVJS(Ya*9+XP2*~YCbcY0>p3;EHSi|?7p9r5(cRgu0kZZcFx@xu
+z3gpk<!kz+PdN|)h5W{?MkUqimc(IQlZoBYbB{0ofI)X&?W$m9}*1V<DqJ4lMIr|Lz
+zZ8B@oKA>gSK!1>u_}mVXtnI#+U4vG=0)jNm7gdmCZTG$E6=?042vSd9R6+7!*4i=Y
+z>GBXkx*e4B$J+8|Z!*L5e08Ki4r3FTUapG<$W^HgVD)-)4DLztRq<hPx4E9&FfIw_
+p%u%u1Y#9HU*XGF#zuj8!4xe90Q^7AjJ^%m!07*qoL<FuvV1nWqxN!gg
+
+delta 359
+zcmV-t0hs=!1A+sPB!5XsL_t(|+MScjZo)teMg3LTkc2$hwkiSy0t5olsudtmTeZ?`
+z{i)1M9{mPaj+{zqn?7<^vpKfM_ZqGS7q}i=;3n11Fx6_5Y8)pTCyBvnY;YDEoW}+i
+zk;P?XaTQs$4z05ZGuQ?h)UX<+nntOnaiVFG7@Ee0X0f4pY=3AGSz1PxR*|K3XlWB>
+zv<)(~;{ww8zcB5BjBbO>0U5gsOn3cUf&BSfxK;~H_x&6}7S@2<^a-X1E+E^k;J->>
+z+WR?zSoLM>pJ3MB&*|V72;y^NVZU`|9sGihUV$JXX>7YqGIsSodIg=hfF!J8Rhwk&
+z>V5JGI&%SuXJEssHq|ie>=pFrmI#vVHlIJnmOs~>8Kx(<R3L}Z1*T`WbU?03b%51N
+zuY~F(`KtIZINKagP8f%TeP*k8+q^LTGmp)k8Gh}(!8`FgwG{|t*v|j}002ovPDHLk
+FV1k0Ose}Lk
+
+diff --git a/public/icons/icon-32.png b/public/icons/icon-32.png
+index 01dd7276ebc50740caa69f116d5e146a44556378..c328b0d5a6f93bded73bd7358df71000284a1716 100644
+GIT binary patch
+delta 798
+zcmV+(1L6Fx1+@l{B!B!#L_t(|+QpZ9OB7)g#?N2-$N3WJUS}_}H}~3J)V!>y>&j|L
+zW?5$0nlT9?2qK6eh#<&-2!aF=1QA3KL=Zs`K@frjLB#e^P8@g#rfD5_$8CDPz>oKR
+z&-*;jfr4}idi))5CC~u_!A>a2oiH4BLOJ4uO4Q}3##}fVcYotl!j02O56+}KIGgt3
+zT*iy@SsyOsd|1m%xKxl(Df)4_+m9<f0bK13;96f0*ZYHxje!ts4u)W>B*XTQ3_HVN
+z*c}PO-e?3G!KHG<saB${dNt;v$+(-Q5^kDKdT1u)q1m*T<}zNI&-!Q~=c8I)qNRdF
+zO3_ct-F{l>34hRPZ-CbNg0$Wrq>X_PZ4QR&TP0cD9+D+Je7_t4BU~v*oK%UrsEu&i
+zD#^4xB-74tn080PiUwE5qF^_i_C_PLUydjYKd3}Of9-a`Nga#QK_x03j>kY7IMrr2
+z9gfG;qiPJaX|LN1r=x1DemoHe?W@@hr{jq@J(-L<K!5!6mf=QOfYZ~fT?oQtnuedJ
+z7U1;kS{H(FxO3sHstGtfpGqJIdp#3=QJKK$#q|V&@b<sp?N$Rgy_`-Wh+z4ra7_j{
+zy}FS^5UFNq;F=YmoMnL1>zNdSh*Z;m-i~W$8Q}EhW(q;%xv9xq<mB45vkY*0dn=6~
+z%7m%IwSVKySq3=0yPZZ5O~%w-txEsqECZb0-^n0|8fEJ3R;7P)mH|#5<}wJP!<hz)
+zRq5ZHWq{MiyIBNLAWc)vs`PM8Iyilr&mxHSdTyjzh4Z!RrGwMwdzTSJb#6M(Te)`a
+z&Ch_-m;09yL~pm6=Z);O(X=;$)7J+%2Z*Ji{(m3f^^;l-w2eiz8BQm)oO-&L2W?%F
+zY=+b6VqW_8Fc11&O|cQKF#P*c0l=`UDR#ntJSxB+i=tSUB(XHq+dOcpcI_Jcr&0tX
+z9C%&gjfIy6?(JNixxI3M<POI*ikl3V3C?qlR8BPx7WQ_wS9Uly8UE+|)p*)@;EeEJ
+cj~9#Z8)ryC@7gUlyZ`_I07*qoM6N<$f-^XZE&u=k
+
+delta 662
+zcmV;H0%`rV2CfB=B!6{DL_t(|+QpYicG^G?hHJ&5PogsfVhu>%+6mx!1P?fgqd0@f
+za17l~JGayrpP}+fs?KXGSb$KJ|Gj_x{c3gB09%_6u+4rGJiyyPLXX`KWNQ#eG4Q3>
+z@uk?!oQOR?5&PXl9Iy|&i8vyAi8%IBal$_JQgP;`t#da8@_*1xVdSdJ7mk8UN5MR}
+z)eB_Q4`e(DBo2IuJHEu-%n9!K3GR0jJYXMo6Fee&2_AbXp0H276wkaA&)v-N&`qO}
+zt1J_Kr2`o7uop<|6SzJ&4&4+-uF8Djs8GYR01d<O(ouNjsF2{-6u>z4rr?>c9c7Je
+z1^U884a0G4tAA*0PeI@IxM4Vs?P+{N0r;sk4aXaMitp@c3;3O{3@@qzoGgHg%+l~h
+zS^<vlDF9cvh459i1ROtXOa*XxeG$H{O5k{#2gqvsU+}s$2c8Gu#_~_$S_L?M+;|kg
+zU9HlETjlFX1vrKjfLm(mJFnx|Nd-8DuQ|Y?BC}2aeShpafC0x(6o7|`(h66{KPMI7
+zct-(vk|`~(Rb~EjQUT5Z@-eEkwpW$;&$9r};rN*X@C;YlSk?)kkDXM2<Co5(03IMq
+zyINJ5a4iFlUpuorz%nhhDx8kplmX8J@aVjBKVRk8^*?_Bj^8K%&+S$F`MmNv@3zl_
+z<9%n=0)Ji_;{O1T?>jTl8%xwMoE%NsGtldj)i4|<?V0tR0vNkm*dRP4_@4mAt`;^4
+z|IvPeXNw}QOBOE;am^Pl(#NjhKPf-~4zw=O#zIR2&FwTg)AULM<Sm;f85$<2pHoY{
+wV^eLX@=67UOz)hY8r}8@gH8CaS5NR83_IbLqz`%R6951J07*qoM6N<$f~rV5-T(jq
+
+diff --git a/public/icons/icon-48.png b/public/icons/icon-48.png
+index 807b34b39c5b6ae7e60bf70114f372fedfe9c7c2..31d765aa6773bed5c2c65303cd723ddf51c9428b 100644
+GIT binary patch
+delta 1452
+zcmV;d1ylNk2)zrCBYy>iNkl<Zc-qyOdutPE6voe&$lq%2_xn9*+SK%B?ZwzwYsVTJ
+zdokN>SDF?PMMM$Nk%J<Nh$5nhC?bl8B8rG2qKH(MWtU~yPcR?h?7lEB48z2B+KDF5
+zC-}X?`<{8u^FW((6STWFL5F)Ybh<Y~!Lu2<y<4Eiw*~rqTYsS6Z-#+@83u!97!F#X
+z7_z`f*aD@96-J|07>inAJZ1wSZi9)04ax~SOeXD6N!ej4?SPq#17<T0sAioo*XD%z
+zoD&vuE;!Wgg2fIOEaly>oOi?FPB$Fc>VcyL4;<_A!0|3Goapw#$sRA9>h;0tULTz4
+z^TF9|emK|fhkx_^e!%SkSSx&CIB2OALl$u)Y{62*ilb30jzz6F9<!kkx8X#>hUJ7E
+zCzE!pr0h7AcHm6LfwLJ0R<ll=Yjfg!&WQ^-7anSN;bMmim-230&b#q&ryGxK_2AKh
+z2ak1m#N%Dw+KFy&VKw**0|EFRylEg{76*f7X*g)1Vt>d&BVh}bB32rWT4^k5rSX`J
+zgt(0+5;iI)>@=CQQzd1mskDP;G7g%}IH;O+(p;O9=5tP3$hqiHyNeb(T(p#T({kQT
+zhdbSLWUGgc7CdyU%R|SzymX@5ODB80bgI`Uo$mFCXZn05E%=Lr0jLKr3<S*5V9-oI
+z5uQ%>`hVz5pO4ON^GoOY{el|)(ohhz;A;Z`Gc^%Bo$L40`F=m)_CQSuf0-RX<I6WI
+zJY5(F(8a-kz~Qe92SI)3r6z}`OG82F@=(yk;IHlofpXf2EdWoKhk|rvI4CmsYsC;K
+zN2Syv@N{)YNMi8U*#Q)DzE$AqS}{b|i=o1eoqu8Af7n`!!PAYM;o8lSFmQVywirC!
+z90`lJN@3vM291VS%V2oARSM(nQUtg$L!;nVlR@xwyA;7YyCT3{C2ka6uQmuzcXmba
+z?q~$KCC2r_Z&d4qr@NyOytg|F+|Q$4c%!8gp6>0A;{CBG@MQ$o3g2k05uWakMezYU
+zfPcJ6;cD<dTC2d*gRv+++!F)724X$<pRGFZ^l(oMAC1R=@37d6@LU@3^k_VWkA)cU
+z1ss3mgVieyczP_v@QDxyo*tkPKPe-xjZzx$^hAi`)4g%v(Ff}BHjR?<!78NzPfz#8
+z@!3Qicy5Dwjaeh%*_~HP1D>8u#PRvQ1b^_*3H7?lMo$~1G~ns^z68D~Cx9nrsMiu3
+zE%m5WN&}u=loR-p9YBuzP_LhF^r%!y1D;-%6ZmR>5_ndLdY6$#k4mL9;OW)=B)*<Z
+z0uNeI?<Qrm)T2@<4S0GznZ!4hB=D3N^{#<NOFb%;(txKol_b8cq<}}<sCS1oT7T+M
+zsgwphy{)A1-GLPFd>-{K;6|$+JeLZd-W^Ec`>7Q0ask(q9y9`;Jy<QN;OYHT3O`Jz
+zfj1+#-sr<<c=lkmq=Kgp(`o$34j|V$xY68Zqjz3CDp!H0kJD-VG?ND2Nr?@}ZN9gR
+zd>3Bh!K&fu(@a|YJevVtsMT5wo_{{iW@=v!W`MVWg%*RSF9$P)uhk4Ft4yhd;3WpX
+zQq6+0hZS1{p1xKyB7^_-OBR$ptVwPIn;l+Ssb)<K{`a{os7qv_$>C|GniV+wAHTMN
+zRs&vZV)&X8{!ey*It{oWw}H)cZ3H#^U-NCCS>MY&tVwPIrJp=)MCF}V!hiq0kb`>g
+zz<XG^4J^o=lqfeNDChGir^F~{l_)1>DCagPrw1tSuqba*DEoPoT_wui2IW6&jn8>L
+zZM5M3`7H-)fd|$GvO<k@Qmoct%?K+OSU%4pZk7_Wpp|8nEbe2884I0QZo{GvmL9ML
+zob9k|4P=`XTSl0lXO@_`N+o8@n73i}fc;_D0{`#-2lx-=|K{yh$qT>$0000<MNUMn
+GLSTZ=#me6R
+
+delta 1008
+zcmV<M0}uSY3xx=fBYy+TNkl<Zc-qyO+fw2{5Qg&-yv&M1H0<pj0PzqH2r8aYgNNN$
+zNYy;$#st{PBg|G${(;#s5h96_uKMo3Kb1_TyNz#O{}{w~@PnxRF@DxOK^-(eldwEv
+z6SOA07+YX_BVq^a0vqhD6TY#pZ~zVo(>L1S2z1Oq&?TyYaeoZvmA4u-&uP{?w`qB7
+z6SOA0ur08?5wQbyferT737_pN9DqZ@^xd}UJ8jdqX33vWfH&kz^_u54YF^l=dAvzj
+z9^VA52`_vLY;Q#DfL&mNy>-Ip`w9o(kT8AT21gNL#|+$#8I<DWCjnyQ?K;FiQJ#0q
+zK+rXVuv-mmU4LE#h>>^d5ML5`-mM1wIKoloPep*&PkveD`ALK=<wXGPoe!5>o(NB?
+zL5bvh6$HR(;}$@kpGLSO->VD_^{5OBBF}r3ASC%S835;eQRI2AGUR8Kp(O&~59<_6
+zo^Z}(0Q_N#B+t()LstaA-G*f?uUE$M1iKIcqDvXeN`HP<WhBopWB}YM*`o4kYe9Jt
+z;BpNCT9W|j<rl4Y%Ja)L1ZYhHq?6COQp$?}SJMFEE<cxi-ZiH@znTURT@;%o|Isx=
+zei{I6AWM?}>`IUq0j}3ZhU{V4GRn(}k>}TIqbL9xaQ2ZO?0W)e@*=>E41flF;h$8N
+zuZ>zU@_+n>0<4Y<Ir?B}?lyUq`oYEpP~`c|>WKAa0E|9TUCi>7r&mS~pvm*T41l2%
+zOM9!#`?OIjMqUKCl>snxN_8d9BY=9^=m9i&ek%iD+{e=1=kq=))ryf90q$e~jQdhG
+zBY7W{{{?t0&+lXa3|d**PAcotk4m*-<VAq{D1U&M4zsjvU|s>_2df9r<oP`XD31&|
+z-ezfg*gOKLr;S=M^8CI$VorHH4Uo10&$^Q2Woh!<DUYWCFrQC7J;+0zKG>uHio6Ig
+zpa9s6u=kEWvX<{B1kmL9Kn;M+$U>u!Mc;Y-sGK1`4S=1Lo5S4Zt!Cs+`Irw@mnYl@
+z5q}_Bra1+Z=MUwvBLZL>XcbJJupU<s0NcQ@K=L8UivY?h(=CWRe_R>6B>yA>U=Lfu
+zHgMVH>FJlAWB_f6Y%jSyVN3aE89-YiJ4-C@sPfM%e+?sH18!p*xJ<8&t;_!s0b<to
+z*u$2v4Gcf|v~ksUUX>RC666iJhs8F~!f8&*#b$(IKF=^Eo`8uN!`y~pdce@bGIUZ5
+z_j!g}B^yj}@sqOTQJEzF`wIfhkQbbT3qZ4Z;!1%=eFRO+Xz0`jx8M#?Cq>N&U5AN*
+e!ULE`p7;m$-G;{K1&7H10000<MNUMnLSTX>GTX!e
+
+diff --git a/public/manifest.json b/public/manifest.json
+index 90e3f2e89e116d36731b2776222e26d4667dc5b6..3bd444120c004b4474763c75dc9e06089717e5e3 100644
+--- a/public/manifest.json
++++ b/public/manifest.json
+@@ -1,60 +1,60 @@
+ {
+   "manifest_version": 3,
+-  "name": "ScholarPath — Scholarship Strategy",
++  "name": "Nexus — Scholarship Strategy",
+   "version": "0.1.0",
+   "description": "Build a student profile, find scholarships you actually qualify for, compare them by value per hour, get a prioritized plan, and autofill applications.",
+   "minimum_chrome_version": "114",
+   "permissions": [
+     "storage",
+     "sidePanel",
+     "activeTab",
+     "tabs",
+     "contextMenus",
+     "alarms",
+     "notifications"
+   ],
+   "host_permissions": ["<all_urls>"],
+   "content_security_policy": {
+     "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://zrqfanveghxodzavjrkb.supabase.co wss://zrqfanveghxodzavjrkb.supabase.co"
+   },
+   "background": {
+     "service_worker": "background.js",
+     "type": "module"
+   },
+   "side_panel": {
+     "default_path": "sidepanel/index.html"
+   },
+   "action": {
+-    "default_title": "Open ScholarPath",
++    "default_title": "Open Nexus",
+     "default_icon": {
+       "16": "icons/icon-16.png",
+       "32": "icons/icon-32.png",
+       "48": "icons/icon-48.png",
+       "128": "icons/icon-128.png"
+     }
+   },
+   "icons": {
+     "16": "icons/icon-16.png",
+     "32": "icons/icon-32.png",
+     "48": "icons/icon-48.png",
+     "128": "icons/icon-128.png"
+   },
+   "content_scripts": [
+     {
+       "matches": ["http://*/*", "https://*/*"],
+       "js": ["content.js"],
+       "run_at": "document_idle",
+       "all_frames": false
+     }
+   ],
+   "commands": {
+     "autofill-page": {
+       "suggested_key": { "default": "Alt+Shift+F" },
+-      "description": "Fill the current form with your ScholarPath profile"
++      "description": "Fill the current form with your Nexus profile"
+     },
+     "open-panel": {
+       "suggested_key": { "default": "Alt+Shift+S" },
+-      "description": "Open the ScholarPath side panel"
++      "description": "Open the Nexus side panel"
+     }
+   }
+ }
+diff --git a/scripts/generate-icons.mjs b/scripts/generate-icons.mjs
+index 761e0bcb68ce997299c1aebbdc33312a4accf0d4..fb8ca61cf5050a6ea1ff8a43a4dd45fb2c351d13 100644
+--- a/scripts/generate-icons.mjs
++++ b/scripts/generate-icons.mjs
+@@ -1,29 +1,29 @@
+ /**
+  * Generates the extension icons as PNGs with no image dependencies.
+  *
+- * Rasterizes a rounded indigo-violet tile with a white graduation cap, then
++ * Rasterizes a rounded chocolate-orange tile with a white graduation cap, then
+  * encodes it by hand (PNG scanlines + zlib deflate + CRC32 chunks).
+  */
+ 
+ import { deflateSync } from 'node:zlib';
+ import { mkdirSync, writeFileSync } from 'node:fs';
+ import { dirname, resolve } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ 
+ const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../public/icons');
+ const SIZES = [16, 32, 48, 128];
+ 
+ function lerp(a, b, t) {
+   return a + (b - a) * t;
+ }
+ 
+ function mixColor(c1, c2, t) {
+   return [Math.round(lerp(c1[0], c2[0], t)), Math.round(lerp(c1[1], c2[1], t)), Math.round(lerp(c1[2], c2[2], t))];
+ }
+ 
+ /** Signed coverage of a point inside a rounded rectangle, anti-aliased. */
+ function roundedRectAlpha(x, y, size, radius) {
+   const inset = size * 0.03;
+   const min = inset;
+   const max = size - inset;
+   const dx = Math.max(min + radius - x, 0, x - (max - radius));
+@@ -55,52 +55,52 @@ function capAlpha(x, y, size) {
+   ];
+   if (pointInPolygon(u, v, board)) return 1;
+ 
+   const base = [
+     [0.29, 0.49],
+     [0.71, 0.49],
+     [0.71, 0.68],
+     [0.62, 0.75],
+     [0.38, 0.75],
+     [0.29, 0.68],
+   ];
+   if (pointInPolygon(u, v, base) && !pointInPolygon(u, v, board)) return 1;
+ 
+   // Tassel: a vertical line hanging off the right edge with a bead.
+   if (u > 0.8 && u < 0.845 && v > 0.42 && v < 0.66) return 1;
+   const beadDx = u - 0.822;
+   const beadDy = v - 0.7;
+   if (Math.sqrt(beadDx * beadDx + beadDy * beadDy) < 0.05) return 1;
+ 
+   return 0;
+ }
+ 
+ function renderIcon(size) {
+   const pixels = Buffer.alloc(size * size * 4);
+   const radius = size * 0.22;
+-  const topColor = [79, 70, 229];
+-  const bottomColor = [124, 58, 237];
++  const topColor = [61, 40, 31];
++  const bottomColor = [228, 114, 63];
+ 
+   for (let y = 0; y < size; y += 1) {
+     for (let x = 0; x < size; x += 1) {
+       const index = (y * size + x) * 4;
+       const tileAlpha = roundedRectAlpha(x + 0.5, y + 0.5, size, radius);
+       const [r, g, b] = mixColor(topColor, bottomColor, (x + y) / (size * 2));
+       const cap = capAlpha(x + 0.5, y + 0.5, size);
+       const red = cap ? 255 : r;
+       const green = cap ? 255 : g;
+       const blue = cap ? 255 : b;
+       pixels[index] = red;
+       pixels[index + 1] = green;
+       pixels[index + 2] = blue;
+       pixels[index + 3] = Math.round(255 * tileAlpha);
+     }
+   }
+   return pixels;
+ }
+ 
+ const CRC_TABLE = (() => {
+   const table = new Int32Array(256);
+   for (let n = 0; n < 256; n += 1) {
+     let c = n;
+     for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+     table[n] = c;
+diff --git a/scripts/smoke-test.mjs b/scripts/smoke-test.mjs
+index 6c40d5df2f5681acf39d58a83cc524e68729e8b1..b3526bd4278baada4ad49c15f61e8288b0cbac59 100644
+--- a/scripts/smoke-test.mjs
++++ b/scripts/smoke-test.mjs
+@@ -102,51 +102,51 @@ async function main() {
+   const { server, port } = await serveDemo();
+   const formUrl = `http://127.0.0.1:${port}/application-form.html`;
+ 
+   const browser = await puppeteer.launch({
+     executablePath,
+     headless: headful ? false : 'new',
+     args: [
+       `--disable-extensions-except=${distDir}`,
+       `--load-extension=${distDir}`,
+       // Chrome 137+ ignores --load-extension unless this kill switch is disabled.
+       '--disable-features=DisableLoadExtensionCommandLineSwitch',
+       '--no-sandbox',
+       '--no-first-run',
+       '--allow-file-access-from-files',
+       '--window-size=1400,1000',
+     ],
+   });
+ 
+   try {
+     const worker = await browser.waitForTarget((target) => target.type() === 'service_worker', { timeout: 15000 });
+     const extensionId = new URL(worker.url()).host;
+     check('service worker started', Boolean(extensionId), `extension id ${extensionId}`);
+ 
+     const workerHandle = await worker.worker();
+     const manifest = await workerHandle.evaluate(() => chrome.runtime.getManifest());
+-    check('manifest is readable from the worker', manifest.name.startsWith('ScholarPath'), manifest.name);
++    check('manifest is readable from the worker', manifest.name.startsWith('Nexus'), manifest.name);
+     check(
+       'side panel is registered',
+       manifest.side_panel?.default_path === 'sidepanel/index.html',
+       manifest.side_panel?.default_path,
+     );
+ 
+     // Seed the profile the way the side panel would.
+     await workerHandle.evaluate(async (profile) => {
+       const current = (await chrome.storage.local.get('scholarpath.state.v1'))['scholarpath.state.v1'] ?? {};
+       await chrome.storage.local.set({
+         'scholarpath.state.v1': {
+           ...current,
+           profile,
+           applications: [],
+           customScholarships: [],
+           settings: {
+             autofillEnabled: true,
+             confirmBeforeFill: true,
+             strictAutofill: false,
+             dismissedScholarshipIds: [],
+             comparisonIds: [],
+             onboardingComplete: true,
+           },
+         },
+       });
+diff --git a/src/background/service-worker.ts b/src/background/service-worker.ts
+index ec04465a7c44331337d20a50a30322c7fbf1c085..ca5ae63f191143259b73334dd587a27a8e7cb323 100644
+--- a/src/background/service-worker.ts
++++ b/src/background/service-worker.ts
+@@ -6,56 +6,56 @@
+  * applications into notifications before it is too late to act on them.
+  */
+ 
+ import { daysUntil } from '../core/dates';
+ import { SEED_SCHOLARSHIPS } from '../data/scholarships';
+ import { loadState } from '../core/storage';
+ import { resolveDeadline } from '../core/tracker';
+ import type { PanelToContentMessage } from '../shared/messages';
+ 
+ const DEADLINE_ALARM = 'scholarpath:deadline-check';
+ const CONTEXT_AUTOFILL = 'scholarpath:autofill';
+ const CONTEXT_CAPTURE = 'scholarpath:capture';
+ 
+ chrome.runtime.onInstalled.addListener(async () => {
+   await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+ 
+   // Content scripts remember a per-site dismissal in session storage, which is
+   // only readable from an untrusted context once the access level is widened.
+   await chrome.storage.session
+     .setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' })
+     .catch(() => {});
+ 
+   chrome.contextMenus.removeAll(() => {
+     chrome.contextMenus.create({
+       id: CONTEXT_AUTOFILL,
+-      title: 'Fill this form with my ScholarPath profile',
++      title: 'Fill this form with my Nexus profile',
+       contexts: ['page', 'editable'],
+     });
+     chrome.contextMenus.create({
+       id: CONTEXT_CAPTURE,
+-      title: 'Save this scholarship to ScholarPath',
++      title: 'Save this scholarship to Nexus',
+       contexts: ['page', 'link', 'selection'],
+     });
+   });
+ 
+   chrome.alarms.create(DEADLINE_ALARM, { periodInMinutes: 60 * 12 });
+ });
+ 
+ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+   if (!tab?.id) return;
+   if (info.menuItemId === CONTEXT_AUTOFILL) {
+     const state = await loadState();
+     await sendToTab(tab.id, {
+       type: 'sp:autofill',
+       overwriteExisting: false,
+       minConfidence: state.settings.strictAutofill ? 0.8 : 0.6,
+     });
+   }
+   if (info.menuItemId === CONTEXT_CAPTURE) {
+     await openPanel(tab.windowId);
+     await sendToTab(tab.id, { type: 'sp:capture-scholarship' });
+   }
+ });
+ 
+ chrome.commands?.onCommand.addListener(async (command) => {
+   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+diff --git a/src/content/overlay.ts b/src/content/overlay.ts
+index 2d312b8a39492b3320c7f66c97bd2978f15a3d57..6038cb9bbb101d039a552dbbecf82b89ce52ffd0 100644
+--- a/src/content/overlay.ts
++++ b/src/content/overlay.ts
+@@ -1,162 +1,162 @@
+ /**
+  * On-page overlay.
+  *
+  * Rendered into a shadow root so no host page CSS can leak in or out, and kept
+  * deliberately small: a single card in the corner that offers to fill the form
+  * and then reports exactly what it did.
+  */
+ 
+ import type { FillReport } from '../core/autofill';
+ 
+ const HOST_ID = 'scholarpath-overlay-host';
+ 
+ const STYLES = `
+   :host { all: initial; }
+   .card {
+     position: fixed;
+     right: 16px;
+     bottom: 16px;
+     width: 320px;
+-    background: #ffffff;
+-    color: #111827;
+-    border: 1px solid #e5e7eb;
++    background: #fffdfb;
++    color: #3d281f;
++    border: 1px solid #ecd8cd;
+     border-radius: 12px;
+-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
++    box-shadow: 0 12px 32px rgba(61, 40, 31, 0.18);
+     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+     font-size: 13px;
+     line-height: 1.45;
+     z-index: 2147483647;
+     overflow: hidden;
+   }
+   .header {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     padding: 10px 12px;
+-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
++    background: linear-gradient(135deg, #3d281f, #58382a);
+     color: #ffffff;
+     font-weight: 600;
+   }
+-  .header .dot { width: 8px; height: 8px; border-radius: 50%; background: #a5f3fc; }
++  .header .dot { width: 8px; height: 8px; border-radius: 50%; background: #e4723f; }
+   .header .spacer { flex: 1; }
+   .header button {
+     background: transparent;
+     border: none;
+-    color: #e0e7ff;
++    color: #f8e9e1;
+     cursor: pointer;
+     font-size: 16px;
+     line-height: 1;
+     padding: 2px 4px;
+   }
+   .body { padding: 12px; }
+   .body p { margin: 0 0 8px; }
+-  .muted { color: #6b7280; font-size: 12px; }
++  .muted { color: #876d5e; font-size: 12px; }
+   .actions { display: flex; gap: 8px; margin-top: 10px; }
+   button.primary {
+     flex: 1;
+-    background: #4f46e5;
++    background: #e4723f;
+     color: #fff;
+     border: none;
+     border-radius: 8px;
+     padding: 8px 10px;
+     font-weight: 600;
+     cursor: pointer;
+   }
+-  button.primary:hover { background: #4338ca; }
++  button.primary:hover { background: #cb5d2e; }
+   button.ghost {
+-    background: #f3f4f6;
+-    color: #374151;
++    background: #f5ebe6;
++    color: #5f463a;
+     border: none;
+     border-radius: 8px;
+     padding: 8px 10px;
+     cursor: pointer;
+   }
+   ul { margin: 6px 0 0; padding-left: 16px; max-height: 140px; overflow-y: auto; }
+   li { margin-bottom: 3px; }
+   .pill {
+     display: inline-block;
+-    background: #eef2ff;
+-    color: #3730a3;
++    background: #fff0e8;
++    color: #9b421f;
+     border-radius: 999px;
+     padding: 1px 8px;
+     font-size: 11px;
+     margin-right: 4px;
+   }
+   .warn { color: #92400e; }
+ `;
+ 
+ const HIGHLIGHT_CLASS = 'scholarpath-filled-highlight';
+ 
+ function ensureHighlightStyles(): void {
+   if (document.getElementById('scholarpath-highlight-styles')) return;
+   const style = document.createElement('style');
+   style.id = 'scholarpath-highlight-styles';
+   style.textContent = `
+     .${HIGHLIGHT_CLASS} {
+-      outline: 2px solid #6366f1 !important;
++      outline: 2px solid #e4723f !important;
+       outline-offset: 1px !important;
+-      background-color: rgba(99, 102, 241, 0.06) !important;
++      background-color: rgba(228, 114, 63, 0.08) !important;
+       transition: outline-color 1.2s ease-out;
+     }
+   `;
+   document.documentElement.appendChild(style);
+ }
+ 
+ export interface OverlayHandlers {
+   onFill: () => void;
+   onOpenPanel: () => void;
+   onDismiss: () => void;
+ }
+ 
+ export class Overlay {
+   private root: ShadowRoot;
+   private container: HTMLDivElement;
+ 
+   constructor() {
+     const existing = document.getElementById(HOST_ID);
+     existing?.remove();
+ 
+     const host = document.createElement('div');
+     host.id = HOST_ID;
+     document.documentElement.appendChild(host);
+ 
+     this.root = host.attachShadow({ mode: 'open' });
+     const style = document.createElement('style');
+     style.textContent = STYLES;
+     this.root.appendChild(style);
+ 
+     this.container = document.createElement('div');
+     this.root.appendChild(this.container);
+   }
+ 
+   private render(bodyHtml: string): HTMLElement {
+     this.container.innerHTML = `
+       <div class="card">
+         <div class="header">
+           <span class="dot"></span>
+-          <span>ScholarPath</span>
++          <span>Nexus</span>
+           <span class="spacer"></span>
+           <button data-action="close" aria-label="Close">×</button>
+         </div>
+         <div class="body">${bodyHtml}</div>
+       </div>
+     `;
+     const close = this.container.querySelector('[data-action="close"]');
+     close?.addEventListener('click', () => this.hide());
+     return this.container;
+   }
+ 
+   showOffer(fillable: number, total: number, handlers: OverlayHandlers): void {
+     this.render(`
+       <p><strong>This looks like an application form.</strong></p>
+       <p class="muted">${fillable} of ${total} field${total === 1 ? '' : 's'} match your saved profile.</p>
+       <div class="actions">
+         <button class="primary" data-action="fill">Fill ${fillable} field${fillable === 1 ? '' : 's'}</button>
+         <button class="ghost" data-action="panel">Open panel</button>
+       </div>
+     `);
+     this.container.querySelector('[data-action="fill"]')?.addEventListener('click', handlers.onFill);
+     this.container.querySelector('[data-action="panel"]')?.addEventListener('click', handlers.onOpenPanel);
+     this.container.querySelector('[data-action="close"]')?.addEventListener('click', handlers.onDismiss);
+   }
+ 
+diff --git a/src/core/types.ts b/src/core/types.ts
+index 7421268e769688fda86fbd3bec9a62020ad53fc6..ac95bd8f196cc53ea80ffc96c1fa8ce28a54dc0e 100644
+--- a/src/core/types.ts
++++ b/src/core/types.ts
+@@ -1,27 +1,27 @@
+ /**
+- * Domain model for ScholarPath.
++ * Domain model for Nexus.
+  *
+  * Everything the extension does is derived from two objects: a `StudentProfile`
+  * (what the student is) and a list of `Scholarship`s (what the world offers).
+  * Matching, explanations, comparison, planning and tracking are all pure
+  * functions over those two inputs, which keeps the engine testable and keeps
+  * the student's data local.
+  */
+ 
+ export type EducationLevel =
+   | 'high-school-freshman'
+   | 'high-school-sophomore'
+   | 'high-school-junior'
+   | 'high-school-senior'
+   | 'undergrad-freshman'
+   | 'undergrad-sophomore'
+   | 'undergrad-junior'
+   | 'undergrad-senior'
+   | 'graduate'
+   | 'doctoral'
+   | 'non-traditional';
+ 
+ export type CitizenshipStatus =
+   | 'us-citizen'
+   | 'us-permanent-resident'
+   | 'daca'
+diff --git a/src/sidepanel/App.tsx b/src/sidepanel/App.tsx
+index addeb0c77e5a5dde9b5d85ef14698f750d37f5c9..5f798cfd9dbe1fb2f5dc42e7e45b99cfb8b1d4de 100644
+--- a/src/sidepanel/App.tsx
++++ b/src/sidepanel/App.tsx
+@@ -27,51 +27,51 @@ export function App() {
+   const [tab, setTab] = useState<TabId>('home');
+ 
+   if (!store.state) {
+     return (
+       <div className="app">
+         <div className="empty">Loading your profile…</div>
+       </div>
+     );
+   }
+ 
+   const activeCount = store.state.applications.filter(
+     (application) => application.status === 'saved' || application.status === 'started',
+   ).length;
+   const comparisonCount = store.state.settings.comparisonIds.length;
+ 
+   const badgeFor = (id: TabId): number | undefined => {
+     if (id === 'tracker' && activeCount > 0) return activeCount;
+     if (id === 'compare' && comparisonCount > 0) return comparisonCount;
+     return undefined;
+   };
+ 
+   return (
+     <div className="app">
+       <header className="app-header">
+         <div>
+-          <h1>ScholarPath</h1>
++          <h1>Nexus</h1>
+           <div className="tagline">Find it, plan it, submit it.</div>
+         </div>
+         <span className="spacer" />
+       </header>
+ 
+       <nav className="tabs">
+         {TABS.map((entry) => {
+           const badge = badgeFor(entry.id);
+           return (
+             <button
+               key={entry.id}
+               type="button"
+               className={`tab${tab === entry.id ? ' active' : ''}`}
+               onClick={() => setTab(entry.id)}
+             >
+               {entry.label}
+               {badge !== undefined && <span className="badge">{badge}</span>}
+             </button>
+           );
+         })}
+       </nav>
+ 
+       {tab === 'home' && <DashboardView store={store} onNavigate={setTab} />}
+       {tab === 'profile' && <ProfileView store={store} />}
+       {tab === 'discover' && <DiscoverView store={store} />}
+diff --git a/src/sidepanel/components/AccountView.tsx b/src/sidepanel/components/AccountView.tsx
+index f61d25239440d79171cd86145d78e9e345b1055d..fc2332b486c115edf1da8a9838fa17c69939661b 100644
+--- a/src/sidepanel/components/AccountView.tsx
++++ b/src/sidepanel/components/AccountView.tsx
+@@ -23,44 +23,44 @@ export function AccountView({ store }: { store: AppStore }) {
+     } finally {
+       setBusy(false);
+     }
+   };
+ 
+   return (
+     <div className="view">
+       <div className="card">
+         <h2 style={{ margin: '0 0 6px' }}>Account & sync</h2>
+         {store.session ? (
+           <>
+             <p className="small" style={{ margin: '6px 0' }}><strong>{store.session.user.email}</strong></p>
+             <p className="small muted">
+               Your profile, applications, settings, and saved scholarships are stored in Supabase and available to the
+               website when you sign in with this same account.
+             </p>
+             <div className={`banner${store.syncStatus === 'error' ? ' warn' : ''}`}>
+               {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Supabase' : store.syncError ?? 'Saved locally'}
+             </div>
+             {store.syncError && <p className="small muted">{store.syncError}</p>}
+             <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
+           </>
+         ) : (
+           <div className="stack">
+             <p className="small muted" style={{ margin: 0 }}>
+-              Create an account or sign in to share your ScholarPath data with the website. Data remains cached on this device for offline use.
++              Create an account or sign in to share your Nexus data with the website. Data remains cached on this device for offline use.
+             </p>
+             <label className="field">Email
+               <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+             </label>
+             <label className="field">Password
+               <input type="password" autoComplete="current-password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} />
+             </label>
+             <div className="row">
+               <button type="button" className="btn primary" disabled={busy || !email || password.length < 6} onClick={() => void submit('in')}>Sign in</button>
+               <button type="button" className="btn" disabled={busy || !email || password.length < 6} onClick={() => void submit('up')}>Create account</button>
+             </div>
+             {message && <div className="banner">{message}</div>}
+           </div>
+         )}
+       </div>
+     </div>
+   );
+ }
+diff --git a/src/sidepanel/components/PageView.tsx b/src/sidepanel/components/PageView.tsx
+index 1218d3a0d31a8722d064328acd931dc2c75c7f11..ce7c1fe50b4f17ee1518bda1d837669d5fbcd718 100644
+--- a/src/sidepanel/components/PageView.tsx
++++ b/src/sidepanel/components/PageView.tsx
+@@ -1,42 +1,42 @@
+ import { useCallback, useEffect, useState } from 'react';
+ import { matchScholarship } from '../../core/matching';
+ import { Chip, EmptyState, money } from './common';
+ import type { AppStore } from '../useAppState';
+ import type { ContentResponse, FieldPreview, PanelToContentMessage } from '../../shared/messages';
+ import type { CapturedScholarship } from '../../core/pageCapture';
+ import type { FillReport, FormScan } from '../../core/autofill';
+ 
+ async function sendToActiveTab(message: PanelToContentMessage): Promise<ContentResponse> {
+   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+   if (!tab?.id) return { ok: false, error: 'No active tab.' };
+   try {
+     return (await chrome.tabs.sendMessage(tab.id, message)) as ContentResponse;
+   } catch {
+     return {
+       ok: false,
+-      error: 'ScholarPath cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
++      error: 'Nexus cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
+     };
+   }
+ }
+ 
+ /**
+  * "This page" tab: scans the open tab, previews exactly what would be written
+  * where, fills it, and can capture the listing into the catalog.
+  */
+ export function PageView({ store }: { store: AppStore }) {
+   const [scan, setScan] = useState<FormScan | undefined>();
+   const [pageTitle, setPageTitle] = useState('');
+   const [pageUrl, setPageUrl] = useState('');
+   const [previews, setPreviews] = useState<FieldPreview[]>([]);
+   const [missing, setMissing] = useState<{ key: string; label: string }[]>([]);
+   const [report, setReport] = useState<FillReport | undefined>();
+   const [captured, setCaptured] = useState<CapturedScholarship | undefined>();
+   const [error, setError] = useState<string | undefined>();
+   const [busy, setBusy] = useState(false);
+ 
+   const settings = store.state?.settings;
+ 
+   const refresh = useCallback(async () => {
+     setBusy(true);
+     setError(undefined);
+     setReport(undefined);
+diff --git a/src/sidepanel/index.html b/src/sidepanel/index.html
+index cc0f54a86b69913b118668f6d7ba60d65d00612a..cbfab9d691e08d7b218c74dd2d5d0139f4257775 100644
+--- a/src/sidepanel/index.html
++++ b/src/sidepanel/index.html
+@@ -1,12 +1,12 @@
+ <!doctype html>
+ <html lang="en">
+   <head>
+     <meta charset="UTF-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>ScholarPath</title>
++    <title>Nexus</title>
+   </head>
+   <body>
+     <div id="root"></div>
+     <script type="module" src="./main.tsx"></script>
+   </body>
+ </html>
+diff --git a/src/sidepanel/styles.css b/src/sidepanel/styles.css
+index cb973659e5bae2576d415cab5faf296a71a4d7f2..79e7ce409cb06ba3ae6cd001b70b4f34b4f5370c 100644
+--- a/src/sidepanel/styles.css
++++ b/src/sidepanel/styles.css
+@@ -1,75 +1,75 @@
+ :root {
+-  --bg: #f7f7fb;
+-  --surface: #ffffff;
+-  --border: #e6e6ef;
+-  --text: #14142b;
+-  --muted: #6b7280;
+-  --accent: #4f46e5;
+-  --accent-soft: #eef2ff;
++  --bg: #fcf9f7;
++  --surface: #fffdfb;
++  --border: #ecd8cd;
++  --text: #3d281f;
++  --muted: #876d5e;
++  --accent: #e4723f;
++  --accent-soft: #fff0e8;
+   --green: #047857;
+   --green-soft: #ecfdf5;
+   --amber: #b45309;
+   --amber-soft: #fffbeb;
+   --red: #b91c1c;
+   --red-soft: #fef2f2;
+   --radius: 10px;
+-  --shadow: 0 1px 2px rgba(17, 24, 39, 0.06), 0 4px 12px rgba(17, 24, 39, 0.04);
++  --shadow: 0 1px 2px rgba(61, 40, 31, 0.06), 0 4px 12px rgba(61, 40, 31, 0.05);
+ }
+ 
+ * {
+   box-sizing: border-box;
+ }
+ 
+ html,
+ body,
+ #root {
+   height: 100%;
+   margin: 0;
+ }
+ 
+ body {
+   background: var(--bg);
+   color: var(--text);
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+   font-size: 13px;
+   line-height: 1.5;
+ }
+ 
+ .app {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   min-width: 320px;
+ }
+ 
+ .app-header {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 10px 12px;
+-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
++  background: linear-gradient(135deg, #3d281f, #58382a);
+   color: #fff;
+ }
+ 
+ .app-header h1 {
+   font-size: 14px;
+   margin: 0;
+   font-weight: 650;
+   letter-spacing: 0.2px;
+ }
+ 
+ .app-header .tagline {
+   font-size: 11px;
+   opacity: 0.85;
+ }
+ 
+ .app-header .spacer {
+   flex: 1;
+ }
+ 
+ .tabs {
+   display: flex;
+   gap: 2px;
+   padding: 6px 8px 0;
+   background: var(--surface);
+   border-bottom: 1px solid var(--border);
+@@ -187,62 +187,62 @@ body {
+   gap: 8px;
+ }
+ 
+ .grid-3 {
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 8px;
+ }
+ 
+ button {
+   font-family: inherit;
+   font-size: 12px;
+ }
+ 
+ .btn {
+   border: 1px solid var(--border);
+   background: var(--surface);
+   color: var(--text);
+   border-radius: 8px;
+   padding: 6px 10px;
+   cursor: pointer;
+   font-weight: 550;
+ }
+ 
+ .btn:hover {
+-  border-color: #cfcfe4;
+-  background: #fafaff;
++  border-color: #d9b8a7;
++  background: #fff8f4;
+ }
+ 
+ .btn.primary {
+   background: var(--accent);
+   border-color: var(--accent);
+   color: #fff;
+ }
+ 
+ .btn.primary:hover {
+-  background: #4338ca;
++  background: #cb5d2e;
+ }
+ 
+ .btn.subtle {
+   background: transparent;
+   border-color: transparent;
+   color: var(--accent);
+   padding: 4px 6px;
+ }
+ 
+ .btn.danger {
+   color: var(--red);
+ }
+ 
+ .btn:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+ }
+ 
+ .btn.tiny {
+   padding: 3px 7px;
+   font-size: 11px;
+ }
+ 
+ label.field {
+   display: flex;
+@@ -277,125 +277,125 @@ textarea:focus {
+   border-color: var(--accent);
+ }
+ 
+ textarea {
+   resize: vertical;
+   min-height: 60px;
+ }
+ 
+ .checkbox {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   font-size: 12px;
+   color: var(--text);
+   font-weight: 500;
+ }
+ 
+ .chip {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   border-radius: 999px;
+   padding: 1px 8px;
+   font-size: 11px;
+   font-weight: 600;
+-  background: #f1f1f8;
+-  color: #4b5563;
++  background: #f5ebe6;
++  color: #72584b;
+   white-space: nowrap;
+ }
+ 
+ .chip.accent {
+   background: var(--accent-soft);
+   color: var(--accent);
+ }
+ 
+ .chip.green {
+   background: var(--green-soft);
+   color: var(--green);
+ }
+ 
+ .chip.amber {
+   background: var(--amber-soft);
+   color: var(--amber);
+ }
+ 
+ .chip.red {
+   background: var(--red-soft);
+   color: var(--red);
+ }
+ 
+ .chip.removable {
+   cursor: pointer;
+ }
+ 
+ .progress {
+   height: 6px;
+-  background: #ececf6;
++  background: #f1e4de;
+   border-radius: 999px;
+   overflow: hidden;
+ }
+ 
+ .progress > span {
+   display: block;
+   height: 100%;
+   background: var(--accent);
+   border-radius: 999px;
+ }
+ 
+ .progress.green > span {
+   background: var(--green);
+ }
+ 
+ .match-card {
+   background: var(--surface);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   box-shadow: var(--shadow);
+   padding: 10px 12px;
+ }
+ 
+ .match-card h3 {
+   margin: 0;
+   font-size: 13px;
+   font-weight: 650;
+ }
+ 
+ .match-card .sponsor {
+   font-size: 11px;
+   color: var(--muted);
+ }
+ 
+ .metric-grid {
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   gap: 6px;
+   margin: 8px 0;
+ }
+ 
+ .metric {
+-  background: #fafafd;
++  background: #fff9f6;
+   border: 1px solid var(--border);
+   border-radius: 8px;
+   padding: 5px 6px;
+   text-align: center;
+ }
+ 
+ .metric .value {
+   font-size: 12px;
+   font-weight: 700;
+   display: block;
+ }
+ 
+ .metric .label {
+   font-size: 9.5px;
+   color: var(--muted);
+   text-transform: uppercase;
+   letter-spacing: 0.3px;
+ }
+ 
+ .reasons {
+   margin: 6px 0 0;
+   padding: 0;
+   list-style: none;
+   display: flex;
+   flex-direction: column;
+@@ -496,91 +496,91 @@ table.compare th.metric-label {
+   margin-top: 2px;
+   width: auto;
+ }
+ 
+ .task.done label {
+   text-decoration: line-through;
+   color: var(--muted);
+ }
+ 
+ .empty {
+   text-align: center;
+   color: var(--muted);
+   padding: 24px 12px;
+   font-size: 12px;
+ }
+ 
+ .banner {
+   border-radius: 8px;
+   padding: 8px 10px;
+   font-size: 11.5px;
+   border: 1px solid;
+ }
+ 
+ .banner.info {
+   background: var(--accent-soft);
+-  border-color: #dbdbfa;
+-  color: #3730a3;
++  border-color: #f2c7b1;
++  color: #9b421f;
+ }
+ 
+ .banner.warn {
+   background: var(--amber-soft);
+   border-color: #fde68a;
+   color: var(--amber);
+ }
+ 
+ .banner.success {
+   background: var(--green-soft);
+   border-color: #a7f3d0;
+   color: var(--green);
+ }
+ 
+ details summary {
+   cursor: pointer;
+   font-size: 11.5px;
+   color: var(--accent);
+   font-weight: 600;
+   list-style: none;
+ }
+ 
+ details summary::-webkit-details-marker {
+   display: none;
+ }
+ 
+ details summary::before {
+   content: '▸ ';
+ }
+ 
+ details[open] summary::before {
+   content: '▾ ';
+ }
+ 
+ .confidence-bar {
+   width: 34px;
+   height: 4px;
+   border-radius: 999px;
+-  background: #ececf6;
++  background: #f1e4de;
+   overflow: hidden;
+   flex: none;
+ }
+ 
+ .confidence-bar > span {
+   display: block;
+   height: 100%;
+   background: var(--green);
+ }
+ 
+ .confidence-bar.low > span {
+   background: var(--amber);
+ }
+ 
+ .link {
+   color: var(--accent);
+   text-decoration: none;
+   font-weight: 600;
+ }
+ 
+ .link:hover {
+   text-decoration: underline;
+ }
+ 
+ input[type='range'] {
+diff --git a/supabase/schema.sql b/supabase/schema.sql
+index 8ce2694ef633a6b4cf785ffede126c8b67496ada..b19060bdb8ce254a7eb06c7dde06418d6c1a5271 100644
+--- a/supabase/schema.sql
++++ b/supabase/schema.sql
+@@ -1,22 +1,22 @@
+ -- Run this once in the Supabase SQL editor. The website and extension can then
+ -- read/write the same JSON document for the currently authenticated user.
+ create table if not exists public.scholarpath_states (
+   user_id uuid primary key references auth.users(id) on delete cascade,
+   state jsonb not null default '{}'::jsonb,
+   updated_at timestamptz not null default now()
+ );
+ 
+ alter table public.scholarpath_states enable row level security;
+ 
+-create policy "Users can read their ScholarPath state"
++create policy "Users can read their Nexus state"
+   on public.scholarpath_states for select
+   using (auth.uid() = user_id);
+ 
+-create policy "Users can create their ScholarPath state"
++create policy "Users can create their Nexus state"
+   on public.scholarpath_states for insert
+   with check (auth.uid() = user_id);
+ 
+-create policy "Users can update their ScholarPath state"
++create policy "Users can update their Nexus state"
+   on public.scholarpath_states for update
+   using (auth.uid() = user_id)
+   with check (auth.uid() = user_id);

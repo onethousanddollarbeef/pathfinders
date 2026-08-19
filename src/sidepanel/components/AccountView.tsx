@@ -45,7 +45,7 @@ export function AccountView({ store }: { store: AppStore }) {
         ) : (
           <div className="stack">
             <p className="small muted" style={{ margin: 0 }}>
-              Create an account or sign in to share your ScholarPath data with the website. Data remains cached on this device for offline use.
+              Create an account or sign in to share your Nexus data with the website. Data remains cached on this device for offline use.
             </p>
             <label className="field">Email
               <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
