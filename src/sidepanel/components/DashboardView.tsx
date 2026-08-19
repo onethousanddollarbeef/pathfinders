@@ -64,7 +64,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
         <div className="card">
           <div className="spread">
             <h2 style={{ margin: 0 }}>Do next</h2>
-            <button type="button" className="btn tiny subtle" onClick={() => onNavigate('plan')}>
+            <button type="button" className="btn tiny subtle" onClick={() => onNavigate('discover')}>
               Full plan →
             </button>
           </div>

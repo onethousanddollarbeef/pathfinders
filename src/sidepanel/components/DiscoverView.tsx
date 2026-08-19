@@ -5,6 +5,7 @@ import { Chip, DeadlineChip, EffortChip, EmptyState, MatchMetrics, VerdictBadge,
 import type { AppStore } from '../useAppState';
 import type { DiscoverFilters, SortKey } from '../../core/matching';
 import type { MatchResult } from '../../core/types';
+import { PlanView } from './PlanView';
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'value-per-hour', label: 'Best value per hour' },
@@ -21,7 +22,6 @@ export function DiscoverView({ store }: { store: AppStore }) {
 
   const results = useMemo(() => filterMatches(store.matches, filters), [store.matches, filters]);
   const savedIds = new Set(store.state?.applications.map((application) => application.scholarshipId) ?? []);
-  const comparisonIds = store.state?.settings.comparisonIds ?? [];
 
   const patch = (next: Partial<DiscoverFilters>) => setFilters((current) => ({ ...current, ...next }));
 
@@ -133,10 +133,17 @@ export function DiscoverView({ store }: { store: AppStore }) {
           key={match.scholarship.id}
           match={match}
           saved={savedIds.has(match.scholarship.id)}
-          comparing={comparisonIds.includes(match.scholarship.id)}
           store={store}
         />
       ))}
+
+      <div className="combined-section">
+        <div>
+          <h2>Your plan</h2>
+          <p className="small muted">Turn the scholarships you discover into a prioritized application plan.</p>
+        </div>
+        <PlanView store={store} embedded />
+      </div>
     </div>
   );
 }
@@ -144,12 +151,10 @@ export function DiscoverView({ store }: { store: AppStore }) {
 export function ScholarshipCard({
   match,
   saved,
-  comparing,
   store,
 }: {
   match: MatchResult;
   saved: boolean;
-  comparing: boolean;
   store: AppStore;
 }) {
   const { scholarship } = match;
@@ -189,9 +194,6 @@ export function ScholarshipCard({
           onClick={() => store.saveScholarship(scholarship.id)}
         >
           {saved ? 'Saved' : 'Save & plan'}
-        </button>
-        <button type="button" className="btn tiny" onClick={() => store.toggleComparison(scholarship.id)}>
-          {comparing ? 'In comparison' : 'Compare'}
         </button>
         <a className="btn tiny" href={scholarship.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
           Open site
