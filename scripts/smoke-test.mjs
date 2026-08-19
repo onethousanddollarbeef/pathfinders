@@ -164,7 +164,11 @@ async function main() {
     await panel.waitForSelector('.app-header h1', { timeout: 10000 });
 
     const tabs = await panel.$$eval('.tabs .tab', (nodes) => nodes.map((node) => node.textContent.trim()));
-    check('side panel renders all tabs', tabs.length === 7, tabs.join(', '));
+    check(
+      'side panel renders the consolidated tabs',
+      tabs.length === 5 && !tabs.includes('Compare') && !tabs.includes('Plan') && !tabs.includes('Page'),
+      tabs.join(', '),
+    );
     check('side panel has no page errors', panelErrors.length === 0, panelErrors.join(' | '));
 
     const homeStats = await panel.$$eval('.metric .value', (nodes) => nodes.map((node) => node.textContent.trim()));
@@ -185,26 +189,17 @@ async function main() {
     await panel.$$eval('.match-card', (cards) => {
       for (const card of cards.slice(0, 3)) {
         const save = [...card.querySelectorAll('button')].find((button) => button.textContent.includes('Save'));
-        const compare = [...card.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Compare');
         save?.click();
-        compare?.click();
       }
     });
     await new Promise((done) => setTimeout(done, 400));
 
-    await clickTab(panel, 'Compare');
-    const comparisonRows = await panel.$$eval('table.compare tbody tr td.metric-label', (nodes) =>
-      nodes.map((node) => node.textContent.trim()),
-    );
-    check('comparison table renders every axis', comparisonRows.length >= 9, comparisonRows.join(', '));
-    const bestCells = await panel.$$eval('table.compare td.best', (nodes) => nodes.length);
-    check('comparison highlights the winner per row', bestCells > 0, `${bestCells} highlighted cells`);
-
-    await clickTab(panel, 'Plan');
     const planItems = await panel.$$eval('.plan-item', (nodes) => nodes.length);
     const rationale = await panel.$eval('.plan-item p', (node) => node.textContent.trim()).catch(() => '');
-    check('plan produces ranked items', planItems > 0, `${planItems} items`);
-    check('plan explains its ordering', rationale.length > 0, rationale);
+    check('discover includes the ranked plan', planItems > 0, `${planItems} items`);
+    check('discover plan explains its ordering', rationale.length > 0, rationale);
+    const continueButtons = await panel.$$eval('.continue-footer .continue-button', (nodes) => nodes.length);
+    check('page has a save and continue action', continueButtons === 1, `${continueButtons} buttons`);
 
     await clickTab(panel, 'Tracker');
     const tracked = await panel.$$eval('.match-card', (nodes) => nodes.length);
@@ -317,7 +312,7 @@ async function main() {
       // looks like, and a full-page capture of the plan can be tall enough to
       // hang the screenshot protocol call.
       try {
-        for (const tab of ['Home', 'Profile', 'Discover', 'Compare', 'Plan', 'Tracker', 'This page']) {
+        for (const tab of ['Home', 'Profile', 'Discover', 'Tracker', 'Account']) {
           await clickTab(panel, tab);
           await panel.evaluate(() => document.querySelector('.view')?.scrollTo(0, 0));
           // Headless Chrome stalls when screenshotting a backgrounded tab.
