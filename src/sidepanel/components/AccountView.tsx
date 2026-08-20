@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { isEmailVerified } from '../../core/supabase';
+import { isEmailVerified, NEXUS_AUTH_REDIRECT_URL } from '../../core/supabase';
 import type { AppStore } from '../useAppState';
 import { PageView } from './PageView';
+
+const NEXUS_WEB_URL = 'https://nexusnext.lovable.app';
+const NEXUS_AUTH_URL = `${NEXUS_WEB_URL}/auth`;
 
 type AuthMode = 'sign-in' | 'create';
 
@@ -21,20 +24,20 @@ export function AccountView({ store }: { store: AppStore }) {
     try {
       if (mode === 'sign-in') {
         await store.signIn(email.trim(), password);
-        setMessage('Signed in. Your Nexus data is now synced.');
+        setMessage('Signed in. Your profile and applications are loading from Nexus.');
+        setPassword('');
       } else {
         const result = await store.signUp(email.trim(), password);
         setSignupBlocked(!result.signedIn);
         setMessage(result.message);
         if (result.signedIn) setPassword('');
       }
-      if (mode === 'sign-in') setPassword('');
     } catch (error) {
       const text = error instanceof Error ? error.message : String(error);
       if (text.toLowerCase().includes('email not confirmed')) {
         setSignupBlocked(true);
         setMessage(
-          'This Supabase project still requires email confirmation before sign-in. Disable **Confirm email** under Authentication → Providers → Email for instant access, or verify your email first.',
+          'Your email is not confirmed yet. Open the confirmation link from your inbox (it opens nexusnext.lovable.app), then sign in here with the same email and password.',
         );
       } else {
         setMessage(text);
@@ -76,15 +79,14 @@ export function AccountView({ store }: { store: AppStore }) {
             <p className="auth-subtitle small muted">Signed in and syncing with nexusnext.lovable.app</p>
             <p className="small" style={{ margin: '10px 0 4px' }}><strong>{store.session.user.email}</strong></p>
             <p className="small muted">
-              Your profile, applications, settings, and saved scholarships stay in sync across the website and extension.
+              Your profile, applications, and saved scholarships stay in sync across the website and extension.
             </p>
 
             {showVerifyPrompt && (
               <div className="banner info" style={{ marginTop: 10 }}>
                 <strong>Verify your email (optional)</strong>
                 <p className="small" style={{ margin: '6px 0 8px' }}>
-                  You can use Nexus without verifying, but confirming your email helps secure your account and matches the website.
-                  Verification emails are sent by Supabase (usually <code>noreply@mail.app.supabase.io</code>) — check spam.
+                  Confirming your email secures your account. The link opens on the website — that is normal.
                 </p>
                 <button type="button" className="btn tiny" disabled={busy} onClick={() => void resendVerification()}>
                   Send verification email
@@ -93,26 +95,51 @@ export function AccountView({ store }: { store: AppStore }) {
             )}
 
             <div className={`banner${store.syncStatus === 'error' ? ' warn' : store.syncStatus === 'synced' ? ' success' : ' info'}`} style={{ marginTop: 10 }}>
-              {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Supabase' : store.syncError ?? 'Saved locally'}
+              {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Nexus' : store.syncError ?? 'Saved locally'}
             </div>
             {store.syncError && <p className="small muted">{store.syncError}</p>}
-            <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
+            <div className="row wrap" style={{ gap: 8, marginTop: 10 }}>
+              <a className="btn tiny" href={NEXUS_WEB_URL} target="_blank" rel="noreferrer">
+                Open website
+              </a>
+              <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
+            </div>
           </>
         ) : (
           <>
-            <h2 className="auth-title">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2>
+            <div className="website-first-card">
+              <p className="section-title" style={{ margin: 0 }}>New to Nexus?</p>
+              <h2 className="auth-title" style={{ marginTop: 4 }}>Start on the website</h2>
+              <p className="small muted" style={{ margin: '6px 0 10px' }}>
+                Create your account and build your profile at nexusnext.lovable.app first — confirmation emails and
+                onboarding work best there. Then come back here and sign in with the same email and password to load
+                your information.
+              </p>
+              <ol className="getting-started-steps">
+                <li>
+                  <a className="link" href={NEXUS_AUTH_URL} target="_blank" rel="noreferrer">
+                    Create an account on Nexus
+                  </a>{' '}
+                  (confirm your email if prompted)
+                </li>
+                <li>Complete your profile on the website</li>
+                <li>Return here and sign in below — your data will sync automatically</li>
+              </ol>
+              <a className="btn primary auth-submit" href={NEXUS_AUTH_URL} target="_blank" rel="noreferrer">
+                Go to nexusnext.lovable.app
+              </a>
+            </div>
+
+            <div className="auth-divider">
+              <span>Already have an account?</span>
+            </div>
+
+            <h2 className="auth-title" style={{ marginTop: 0 }}>Sign in to the extension</h2>
             <p className="auth-subtitle small muted">
-              {mode === 'sign-in'
-                ? 'Sign in to see your scholarship matches and sync with the website.'
-                : 'Create an account and start syncing immediately — email verification is optional afterward.'}
+              Use the same email and password as the website to load your profile and applications.
             </p>
 
             <div className="stack" style={{ marginTop: 12 }}>
-              {mode === 'create' && (
-                <p className="small muted" style={{ margin: 0 }}>
-                  Use at least 8 characters. Avoid common or leaked passwords — Supabase will reject weak ones.
-                </p>
-              )}
               <label className="field">
                 Email
                 <input
@@ -127,7 +154,7 @@ export function AccountView({ store }: { store: AppStore }) {
                 <div className="password-field">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+                    autoComplete="current-password"
                     minLength={8}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
@@ -149,7 +176,7 @@ export function AccountView({ store }: { store: AppStore }) {
                 disabled={busy || !email || password.length < 8}
                 onClick={() => void submit()}
               >
-                {mode === 'sign-in' ? 'Sign in' : 'Create account'}
+                Sign in
               </button>
 
               {message && (
@@ -163,18 +190,49 @@ export function AccountView({ store }: { store: AppStore }) {
               )}
 
               {signupBlocked && (
-                <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resendVerification()}>
-                  Send verification email
-                </button>
+                <>
+                  <p className="small muted" style={{ margin: 0 }}>
+                    Confirmation links open in your browser at {NEXUS_AUTH_REDIRECT_URL} — not inside the extension.
+                    After confirming, sign in here again.
+                  </p>
+                  <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resendVerification()}>
+                    Resend confirmation email
+                  </button>
+                </>
               )}
 
-              <button
-                type="button"
-                className="btn subtle auth-switch"
-                onClick={() => switchMode(mode === 'sign-in' ? 'create' : 'sign-in')}
-              >
-                {mode === 'sign-in' ? 'New here? Create an account' : 'Already have an account? Sign in'}
-              </button>
+              <details className="create-here-details">
+                <summary>Create an account in the extension instead</summary>
+                <p className="small muted">
+                  This uses the same Supabase account as the website, but confirmation emails open on the website.
+                  If email does not arrive, create your account on the website instead.
+                </p>
+                {mode === 'create' ? (
+                  <button type="button" className="btn tiny" onClick={() => switchMode('sign-in')}>
+                    Back to sign in only
+                  </button>
+                ) : (
+                  <button type="button" className="btn tiny" onClick={() => switchMode('create')}>
+                    Show create-account form
+                  </button>
+                )}
+              </details>
+
+              {mode === 'create' && (
+                <>
+                  <p className="small muted" style={{ margin: 0 }}>
+                    Use at least 8 characters. Avoid common or leaked passwords.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn auth-submit"
+                    disabled={busy || !email || password.length < 8}
+                    onClick={() => void submit()}
+                  >
+                    Create account here
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}

@@ -285,7 +285,9 @@ async function main() {
 
     await clickTab(panel, 'Account');
     const accountHeading = await panel.$eval('.auth-title', (node) => node.textContent.trim());
-    check('account tab renders sign-in section', accountHeading.includes('Welcome back') || accountHeading.includes('Create'), accountHeading);
+    check('account tab renders sign-in section', accountHeading.includes('Sign in to the extension') || accountHeading.includes('Your account'), accountHeading);
+    const websiteFirst = await panel.$eval('.website-first-card h2', (node) => node.textContent.trim());
+    check('account tab guides users to website first', websiteFirst.includes('Start on the website'), websiteFirst);
     const pageTools = await panel.$eval('.section-heading', (node) => node.textContent.trim());
     check('account tab embeds current page tools', pageTools.includes('Current page'), pageTools);
 
