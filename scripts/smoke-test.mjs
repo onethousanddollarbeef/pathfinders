@@ -175,43 +175,16 @@ async function main() {
     check('home shows computed metrics', homeStats.length >= 3, homeStats.slice(0, 3).join(' / '));
 
     await clickTab(panel, 'Discover');
-    await panel.waitForSelector('.match-card', { timeout: 5000 });
     const cardCount = await panel.$$eval('.match-card', (nodes) => nodes.length);
-    check('discover lists matches', cardCount > 0, `${cardCount} cards`);
-
-    const reasons = await panel.evaluate(() => {
-      const details = document.querySelector('.match-card details');
-      details.open = true;
-      return [...details.querySelectorAll('.reasons li span:last-child')].map((node) => node.textContent.trim());
-    });
-    check('matches explain themselves', reasons.length > 0, reasons[0]);
-
-    await panel.$$eval('.match-card', (cards) => {
-      for (const card of cards.slice(0, 3)) {
-        const save = [...card.querySelectorAll('button')].find((button) => button.textContent.includes('Save'));
-        save?.click();
-      }
-    });
-    await new Promise((done) => setTimeout(done, 400));
-
-    const planItems = await panel.$$eval('.plan-item', (nodes) => nodes.length);
-    const rationale = await panel.$eval('.plan-item p', (node) => node.textContent.trim()).catch(() => '');
-    check('discover includes the ranked plan', planItems > 0, `${planItems} items`);
-    check('discover plan explains its ordering', rationale.length > 0, rationale);
+    check('discover does not show a scholarship catalog', cardCount === 0, `${cardCount} cards`);
+    const discoverCopy = await panel.$eval('.view', (node) => node.textContent);
+    check('discover directs students to save applications they find', discoverCopy.includes('save the application'), discoverCopy);
     const continueButtons = await panel.$$eval('.continue-footer .continue-button', (nodes) => nodes.length);
     check('page has a save and continue action', continueButtons === 1, `${continueButtons} buttons`);
 
-    await clickTab(panel, 'Tracker');
+    await clickTab(panel, 'Applications');
     const tracked = await panel.$$eval('.match-card', (nodes) => nodes.length);
-    check('tracker shows saved applications', tracked >= 3, `${tracked} tracked`);
-    const trackerDeadlines = await panel.$$eval('.match-card .sponsor', (nodes) =>
-      nodes.map((node) => node.textContent.trim()),
-    );
-    check(
-      'tracker deadlines match the ones Discover showed',
-      !trackerDeadlines.some((text) => text.includes('closed')),
-      trackerDeadlines.join(' | '),
-    );
+    check('applications starts without seeded scholarships', tracked === 0, `${tracked} tracked`);
 
     // --- Autofill on a real form ----------------------------------------------
     const form = await browser.newPage();
@@ -312,7 +285,7 @@ async function main() {
       // looks like, and a full-page capture of the plan can be tall enough to
       // hang the screenshot protocol call.
       try {
-        for (const tab of ['Home', 'Profile', 'Discover', 'Tracker', 'Account']) {
+        for (const tab of ['Home', 'Profile', 'Discover', 'Applications', 'Account']) {
           await clickTab(panel, tab);
           await panel.evaluate(() => document.querySelector('.view')?.scrollTo(0, 0));
           // Headless Chrome stalls when screenshotting a backgrounded tab.

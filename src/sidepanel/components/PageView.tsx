@@ -124,7 +124,7 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
                 Fill {scan.fillableFields} field{scan.fillableFields === 1 ? '' : 's'}
               </button>
               <button type="button" className="btn tiny" onClick={() => void capture()} disabled={busy}>
-                Capture scholarship
+                Save application
               </button>
             </div>
           </>
@@ -240,7 +240,7 @@ function CaptureReview({
 
   return (
     <div className="card">
-      <h3>Captured from this page</h3>
+      <h3>Save this application</h3>
       {captured.uncertainFields.length > 0 && (
         <div className="banner warn" style={{ marginBottom: 8 }}>
           Could not confidently read: {captured.uncertainFields.join(', ')}. Check the values below before saving.
@@ -323,7 +323,7 @@ function CaptureReview({
             onDone();
           }}
         >
-          Save and track
+          Save to applications
         </button>
         <button type="button" className="btn tiny" onClick={onDone}>
           Discard

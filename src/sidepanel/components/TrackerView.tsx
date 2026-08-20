@@ -10,13 +10,13 @@ const FILTERS: { value: ApplicationStatus | 'all' | 'active'; label: string }[] 
   { value: 'active', label: 'Active' },
   { value: 'saved', label: 'Saved' },
   { value: 'started', label: 'In progress' },
-  { value: 'submitted', label: 'Submitted' },
+  { value: 'submitted', label: 'Complete' },
   { value: 'awarded', label: 'Awarded' },
   { value: 'all', label: 'All' },
 ];
 
 export function TrackerView({ store }: { store: AppStore }) {
-  const [filter, setFilter] = useState<ApplicationStatus | 'all' | 'active'>('active');
+  const [filter, setFilter] = useState<ApplicationStatus | 'all' | 'active'>('all');
   const state = store.state;
 
   const stats = useMemo(
@@ -30,8 +30,8 @@ export function TrackerView({ store }: { store: AppStore }) {
     return (
       <div className="view">
         <EmptyState
-          title="No applications tracked yet"
-          hint="Save a scholarship from Discover or the plan and it shows up here with a task checklist and deadline."
+          title="No past applications yet"
+          hint="When you find an application online, save it with the current-page tools under Account. It will appear here."
         />
       </div>
     );
@@ -55,7 +55,7 @@ export function TrackerView({ store }: { store: AppStore }) {
   return (
     <div className="view">
       <div className="card">
-        <h2 style={{ margin: 0 }}>Application tracker</h2>
+        <h2 style={{ margin: 0 }}>Past applications</h2>
         <div className="grid-3" style={{ marginTop: 8 }}>
           <div className="metric">
             <span className="value">{stats.saved + stats.started}</span>
@@ -63,7 +63,7 @@ export function TrackerView({ store }: { store: AppStore }) {
           </div>
           <div className="metric">
             <span className="value">{stats.submitted}</span>
-            <span className="label">Submitted</span>
+            <span className="label">Complete</span>
           </div>
           <div className="metric">
             <span className="value">{money(stats.wonValue)}</span>
@@ -174,7 +174,7 @@ function ApplicationCard({
             className="btn tiny primary"
             onClick={() => store.changeStatus(application.scholarshipId, 'submitted')}
           >
-            Mark submitted
+            Mark complete
           </button>
         )}
         {application.status === 'submitted' && (

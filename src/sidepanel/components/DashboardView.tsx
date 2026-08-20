@@ -14,9 +14,6 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
   const stats = trackerStats(state.applications, store.catalog);
   const gaps = findHighImpactGaps(state.profile, store.catalog).slice(0, 3);
   const nextUp = plan.items.filter((item) => item.bucket === 'do-now' || item.bucket === 'this-week').slice(0, 3);
-  const eligible = store.matches.filter((match) => match.verdict !== 'not-eligible');
-  const totalOnTable = eligible.reduce((sum, match) => sum + match.scholarship.amountMax, 0);
-
   const isNew = completeness.percent < 25 && state.applications.length === 0;
 
   return (
@@ -25,8 +22,8 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
         <div className="card">
           <h2 style={{ margin: 0 }}>Let's find your money</h2>
           <p className="small muted" style={{ margin: '6px 0' }}>
-            Three steps: fill in your profile, review the matches that come back with reasons, then work the plan in
-            deadline order. Sign in from Account to sync your work with the website.
+            Fill in your profile, find an application on the web, then save it with the current-page tools under
+            Account. Sign in there to sync your work with the website.
           </p>
           <button type="button" className="btn primary" onClick={() => onNavigate('profile')}>
             Start your profile
@@ -42,21 +39,20 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
         <Progress value={completeness.percent / 100} green={completeness.percent >= 80} />
         <div className="grid-3" style={{ marginTop: 10 }}>
           <div className="metric">
-            <span className="value">{eligible.length}</span>
-            <span className="label">Matches</span>
+            <span className="value">{state.applications.length}</span>
+            <span className="label">Applications</span>
           </div>
           <div className="metric">
-            <span className="value">{money(totalOnTable)}</span>
-            <span className="label">On the table</span>
+            <span className="value">{stats.submitted}</span>
+            <span className="label">Complete</span>
           </div>
           <div className="metric">
-            <span className="value">{money(plan.expectedAward)}</span>
-            <span className="label">Expected</span>
+            <span className="value">{money(stats.wonValue)}</span>
+            <span className="label">Won</span>
           </div>
         </div>
         <p className="small muted" style={{ margin: '8px 0 0' }}>
-          Expected value weighs each award by how likely you are to win it, so it is much smaller than the total — that
-          is the honest number to plan around.
+          Applications you capture stay on this device unless you sign in to sync them.
         </p>
       </div>
 
@@ -64,8 +60,8 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
         <div className="card">
           <div className="spread">
             <h2 style={{ margin: 0 }}>Do next</h2>
-            <button type="button" className="btn tiny subtle" onClick={() => onNavigate('discover')}>
-              Full plan →
+            <button type="button" className="btn tiny subtle" onClick={() => onNavigate('tracker')}>
+              Open applications →
             </button>
           </div>
           {nextUp.map((item) => (
@@ -136,7 +132,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
           </div>
           <div className="metric">
             <span className="value">{stats.submitted}</span>
-            <span className="label">Submitted</span>
+            <span className="label">Complete</span>
           </div>
         </div>
         <p className="small muted" style={{ margin: '8px 0 0' }}>

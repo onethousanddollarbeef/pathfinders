@@ -7,7 +7,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SEED_SCHOLARSHIPS } from '../data/scholarships';
 import { matchAll } from '../core/matching';
 import { buildPlan } from '../core/planner';
 import { createTrackedApplication, setStatus, toggleTask } from '../core/tracker';
@@ -107,10 +106,10 @@ export function useAppState(): AppStore {
     });
   }, [session]);
 
-  const catalog = useMemo(
-    () => [...SEED_SCHOLARSHIPS, ...(state?.customScholarships ?? [])],
-    [state?.customScholarships],
-  );
+  // The extension only tracks applications a student explicitly captures.
+  // The illustrative seed data remains available to the pure engine tests, but
+  // is intentionally never presented as an in-product scholarship catalog.
+  const catalog = useMemo(() => state?.customScholarships ?? [], [state?.customScholarships]);
 
   const matches = useMemo(() => {
     if (!state) return [];
