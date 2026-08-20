@@ -18,10 +18,18 @@ export interface SupabaseSession {
   user: SupabaseUser;
 }
 
+export function isEmailVerified(session: SupabaseSession): boolean {
+  return Boolean(session.user.email_confirmed_at);
+}
+
+export const CONFIRMATION_EMAIL_SENDER =
+  'Supabase Auth (default: noreply@mail.app.supabase.io, or your custom SMTP sender)';
+
 export interface SignUpResult {
   session?: SupabaseSession;
   message: string;
-  confirmationRequired: boolean;
+  signedIn: boolean;
+  verificationOptional: boolean;
 }
 
 function storageArea(): chrome.storage.StorageArea | undefined {
@@ -71,6 +79,9 @@ function parseAuthError(body: string, status: number): string {
     if (parsed.error_code === 'user_already_registered') {
       return 'An account with this email already exists. Sign in instead.';
     }
+    if (parsed.error_code === 'email_not_confirmed' || message.toLowerCase().includes('email not confirmed')) {
+      return 'Email not confirmed yet. Turn off **Confirm email** in Supabase for instant sign-in, or verify your email first.';
+    }
     message = parsed.msg ?? parsed.message ?? parsed.error_description ?? message;
   } catch { /* plain-text error */ }
   return message;
@@ -93,6 +104,20 @@ async function request<T>(path: string, init: RequestInit = {}, accessToken?: st
   return (body ? JSON.parse(body) : undefined) as T;
 }
 
+function buildSession(result: {
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number;
+  user: SupabaseUser;
+}): SupabaseSession {
+  return {
+    ...result,
+    access_token: result.access_token,
+    refresh_token: result.refresh_token,
+    expires_at: result.expires_in ? Math.floor(Date.now() / 1000) + result.expires_in : undefined,
+  };
+}
+
 export async function signUp(email: string, password: string): Promise<SignUpResult> {
   const result = await request<{
     access_token?: string;
@@ -112,23 +137,48 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
     },
   );
 
-  if (!result.access_token || !result.refresh_token) {
+  if (result.access_token && result.refresh_token) {
+    const session = buildSession({
+      access_token: result.access_token,
+      refresh_token: result.refresh_token,
+      expires_in: result.expires_in,
+      user: result.user,
+    });
+    await setSession(session);
+    const verifyHint = isEmailVerified(session)
+      ? ''
+      : ' You can verify your email anytime from Account — it is optional.';
     return {
-      confirmationRequired: true,
-      message: result.confirmation_sent_at
-        ? `Confirmation email sent to ${email}. Open the link in that message, then sign in here to sync.`
-        : `Account created for ${email}. Check your inbox to confirm your email, then sign in.`,
+      session,
+      signedIn: true,
+      verificationOptional: !isEmailVerified(session),
+      message: `Account created — you are signed in and syncing.${verifyHint}`,
     };
   }
 
-  const session = {
-    ...result,
-    access_token: result.access_token,
-    refresh_token: result.refresh_token,
-    expires_at: result.expires_in ? Math.floor(Date.now() / 1000) + result.expires_in : undefined,
-  };
-  await setSession(session);
-  return { session, confirmationRequired: false, message: 'Account created and sync enabled.' };
+  // If confirm-email is disabled, signup should return a session. When it does not,
+  // try signing in immediately in case the account was created anyway.
+  try {
+    const session = await signIn(email, password);
+    const verifyHint = isEmailVerified(session)
+      ? ''
+      : ' You can verify your email anytime from Account — it is optional.';
+    return {
+      session,
+      signedIn: true,
+      verificationOptional: !isEmailVerified(session),
+      message: `Account created — you are signed in and syncing.${verifyHint}`,
+    };
+  } catch {
+    return {
+      signedIn: false,
+      verificationOptional: true,
+      message:
+        `Account created for ${email}, but sign-in is blocked until email is confirmed. ` +
+        `To get instant access (sign up and use Nexus right away), disable **Confirm email** in Supabase: ` +
+        `Authentication → Providers → Email. Verification emails are sent by ${CONFIRMATION_EMAIL_SENDER} — check spam or configure custom SMTP in Supabase Auth settings.`,
+    };
+  }
 }
 
 export async function resendConfirmationEmail(email: string): Promise<string> {
@@ -143,7 +193,7 @@ export async function resendConfirmationEmail(email: string): Promise<string> {
       }),
     },
   );
-  return `Confirmation email resent to ${email}.`;
+  return `Verification email sent to ${email} from ${CONFIRMATION_EMAIL_SENDER}. Check spam if it does not arrive within a few minutes.`;
 }
 
 export async function signIn(email: string, password: string): Promise<SupabaseSession> {
@@ -151,7 +201,12 @@ export async function signIn(email: string, password: string): Promise<SupabaseS
     '/auth/v1/token?grant_type=password',
     { method: 'POST', body: JSON.stringify({ email, password }) },
   );
-  const session = { ...result, expires_at: result.expires_in ? Math.floor(Date.now() / 1000) + result.expires_in : undefined };
+  const session = buildSession({
+    access_token: result.access_token,
+    refresh_token: result.refresh_token,
+    expires_in: result.expires_in,
+    user: result.user,
+  });
   await setSession(session);
   return session;
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isEmailVerified } from '../../core/supabase';
 import type { AppStore } from '../useAppState';
 import { PageView } from './PageView';
 
@@ -11,28 +12,30 @@ export function AccountView({ store }: { store: AppStore }) {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
-  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [signupBlocked, setSignupBlocked] = useState(false);
 
   const submit = async () => {
     setBusy(true);
     setMessage(undefined);
+    setSignupBlocked(false);
     try {
       if (mode === 'sign-in') {
         await store.signIn(email.trim(), password);
-        setAwaitingConfirmation(false);
         setMessage('Signed in. Your Nexus data is now synced.');
       } else {
         const result = await store.signUp(email.trim(), password);
-        const needsConfirmation = result.includes('Confirmation email sent') || result.includes('Check your inbox');
-        setAwaitingConfirmation(needsConfirmation);
-        setMessage(result);
+        setSignupBlocked(!result.signedIn);
+        setMessage(result.message);
+        if (result.signedIn) setPassword('');
       }
       if (mode === 'sign-in') setPassword('');
     } catch (error) {
       const text = error instanceof Error ? error.message : String(error);
       if (text.toLowerCase().includes('email not confirmed')) {
-        setAwaitingConfirmation(true);
-        setMessage('Confirm your email first, then sign in. You can resend the confirmation link below.');
+        setSignupBlocked(true);
+        setMessage(
+          'This Supabase project still requires email confirmation before sign-in. Disable **Confirm email** under Authentication → Providers → Email for instant access, or verify your email first.',
+        );
       } else {
         setMessage(text);
       }
@@ -41,13 +44,13 @@ export function AccountView({ store }: { store: AppStore }) {
     }
   };
 
-  const resend = async () => {
-    if (!email.trim()) return;
+  const resendVerification = async () => {
+    const targetEmail = store.session?.user.email ?? email.trim();
+    if (!targetEmail) return;
     setBusy(true);
     setMessage(undefined);
     try {
-      setMessage(await store.resendConfirmation(email.trim()));
-      setAwaitingConfirmation(true);
+      setMessage(await store.resendConfirmation(targetEmail));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -58,9 +61,11 @@ export function AccountView({ store }: { store: AppStore }) {
   const switchMode = (next: AuthMode) => {
     setMode(next);
     setMessage(undefined);
-    setAwaitingConfirmation(false);
+    setSignupBlocked(false);
     setPassword('');
   };
+
+  const showVerifyPrompt = store.session && !isEmailVerified(store.session);
 
   return (
     <div className="view">
@@ -73,7 +78,21 @@ export function AccountView({ store }: { store: AppStore }) {
             <p className="small muted">
               Your profile, applications, settings, and saved scholarships stay in sync across the website and extension.
             </p>
-            <div className={`banner${store.syncStatus === 'error' ? ' warn' : store.syncStatus === 'synced' ? ' success' : ' info'}`}>
+
+            {showVerifyPrompt && (
+              <div className="banner info" style={{ marginTop: 10 }}>
+                <strong>Verify your email (optional)</strong>
+                <p className="small" style={{ margin: '6px 0 8px' }}>
+                  You can use Nexus without verifying, but confirming your email helps secure your account and matches the website.
+                  Verification emails are sent by Supabase (usually <code>noreply@mail.app.supabase.io</code>) — check spam.
+                </p>
+                <button type="button" className="btn tiny" disabled={busy} onClick={() => void resendVerification()}>
+                  Send verification email
+                </button>
+              </div>
+            )}
+
+            <div className={`banner${store.syncStatus === 'error' ? ' warn' : store.syncStatus === 'synced' ? ' success' : ' info'}`} style={{ marginTop: 10 }}>
               {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Supabase' : store.syncError ?? 'Saved locally'}
             </div>
             {store.syncError && <p className="small muted">{store.syncError}</p>}
@@ -85,7 +104,7 @@ export function AccountView({ store }: { store: AppStore }) {
             <p className="auth-subtitle small muted">
               {mode === 'sign-in'
                 ? 'Sign in to see your scholarship matches and sync with the website.'
-                : 'One account for Nexus on the web and in this extension.'}
+                : 'Create an account and start syncing immediately — email verification is optional afterward.'}
             </p>
 
             <div className="stack" style={{ marginTop: 12 }}>
@@ -109,9 +128,9 @@ export function AccountView({ store }: { store: AppStore }) {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-                  minLength={8}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                    minLength={8}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                   />
                   <button
                     type="button"
@@ -134,14 +153,18 @@ export function AccountView({ store }: { store: AppStore }) {
               </button>
 
               {message && (
-                <div className={`banner${awaitingConfirmation ? ' info' : message.includes('Signed in') || message.includes('sync enabled') ? ' success' : ''}`}>
+                <div
+                  className={`banner${
+                    signupBlocked ? ' warn' : message.includes('Signed in') || message.includes('signed in') ? ' success' : ''
+                  }`}
+                >
                   {message}
                 </div>
               )}
 
-              {awaitingConfirmation && (
-                <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resend()}>
-                  Resend confirmation email
+              {signupBlocked && (
+                <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resendVerification()}>
+                  Send verification email
                 </button>
               )}
 

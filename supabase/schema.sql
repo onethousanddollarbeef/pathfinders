@@ -1,4 +1,6 @@
--- Nexus shares Supabase with nexusnext.lovable.app.
+-- Auth: for instant sign-up (extension + website), disable **Confirm email** under
+-- Authentication → Providers → Email. Verification emails are sent by Supabase
+-- (default noreply@mail.app.supabase.io) or your custom SMTP — not by the extension.
 -- The website already uses profiles, scholarships, user_scholarships, and related tables.
 -- This file documents the extension sync model; run only if you are bootstrapping a fresh project.
 

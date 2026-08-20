@@ -43,7 +43,7 @@ export interface AppStore {
   syncStatus: 'local' | 'syncing' | 'synced' | 'error';
   syncError: string | undefined;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<string>;
+  signUp: (email: string, password: string) => Promise<{ message: string; signedIn: boolean }>;
   resendConfirmation: (email: string) => Promise<string>;
   signOut: () => Promise<void>;
 }
@@ -176,7 +176,7 @@ export function useAppState(): AppStore {
         setSession(result.session);
         setSyncStatus('synced');
       }
-      return result.message;
+      return { message: result.message, signedIn: result.signedIn };
     },
 
     resendConfirmation: async (email) => resendConfirmationEmail(email),

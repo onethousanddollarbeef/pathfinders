@@ -28,14 +28,20 @@ The extension uses project `zrqfanveghxodzavjrkb` (see `src/core/supabase.ts`). 
 | `student_documents` | Document locker (website) |
 | `supplemental_answers` | Per-scholarship profile prompts (website) |
 
-### Auth checklist
+### Auth checklist (instant sign-up + optional verify)
 
-1. In Supabase **Authentication → URL Configuration**, add `https://nexusnext.lovable.app/auth` to **Redirect URLs**.
-2. Enable **Confirm email** if you want verification emails on signup (recommended).
-3. Configure SMTP or use Supabase’s mailer so confirmation emails actually send.
-4. Passwords must be at least 8 characters and not on known breach lists (Supabase rejects weak passwords).
+Nexus is designed for **sign up → signed in immediately → verify later**:
 
-Accounts created in the extension use the same Supabase Auth users as the website. After confirming email, sign in on either surface to sync.
+1. In Supabase **Authentication → Providers → Email**, turn **Confirm email** **OFF**.
+   - When off, signup returns a session right away and email is implicitly confirmed in the database.
+   - When on (Supabase hosted default), signup blocks sign-in until the user clicks a confirmation link — and you must rely on email delivery.
+2. Add `https://nexusnext.lovable.app/auth` to **Redirect URLs** (for optional verification links).
+3. **Where verification emails come from:** Supabase Auth, not the extension.
+   - Default sender is typically `noreply@mail.app.supabase.io` (rate-limited; often lands in spam).
+   - For reliable delivery, configure **custom SMTP** under Authentication → Email templates / SMTP settings.
+4. After sign-in, users who are not verified see an **optional** “Verify your email” prompt on the Account tab (sync is not blocked).
+
+Passwords must be at least 8 characters and not on known breach lists (Supabase rejects weak passwords).
 
 ## Install (development)
 
