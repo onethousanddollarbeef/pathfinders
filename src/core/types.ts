@@ -34,6 +34,8 @@ export type EnrollmentStatus = 'full-time' | 'part-time' | 'not-enrolled';
 /** Self-reported attributes used only for eligibility checks; always optional. */
 export interface Demographics {
   gender?: string;
+  /** Synced with Supabase `profiles.demographics` JSON array (e.g. `["Woman"]`). */
+  tags?: string[];
   ethnicities?: string[];
   firstGeneration?: boolean;
   militaryAffiliation?: string[];
@@ -112,6 +114,9 @@ export interface StudentProfile {
   demographics: Demographics;
   academics: AcademicProfile;
   financials: FinancialProfile;
+
+  /** Short bio — synced with Supabase `profiles.bio`. */
+  bio?: string;
 
   interests: string[];
   careerGoals?: string;
