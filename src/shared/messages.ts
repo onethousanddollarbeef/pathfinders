@@ -12,6 +12,7 @@ export interface FieldPreview {
 }
 
 export type PanelToContentMessage =
+  | { type: 'sp:ping' }
   | { type: 'sp:scan-page' }
   | { type: 'sp:preview-fill' }
   | { type: 'sp:autofill'; overwriteExisting: boolean; minConfidence: number }
@@ -19,6 +20,7 @@ export type PanelToContentMessage =
   | { type: 'sp:highlight-field'; key: FieldKey };
 
 export type ContentResponse =
+  | { ok: true; type: 'ping' }
   | { ok: true; type: 'scan'; scan: FormScan; pageTitle: string; url: string }
   | { ok: true; type: 'preview'; fields: FieldPreview[]; missing: { key: FieldKey; label: string }[] }
   | { ok: true; type: 'fill'; report: FillReport }

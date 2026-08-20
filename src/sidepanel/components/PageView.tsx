@@ -2,22 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { matchScholarship } from '../../core/matching';
 import { Chip, EmptyState, money } from './common';
 import type { AppStore } from '../useAppState';
-import type { ContentResponse, FieldPreview, PanelToContentMessage } from '../../shared/messages';
+import type { FieldPreview } from '../../shared/messages';
 import type { CapturedScholarship } from '../../core/pageCapture';
 import type { FillReport, FormScan } from '../../core/autofill';
-
-async function sendToActiveTab(message: PanelToContentMessage): Promise<ContentResponse> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) return { ok: false, error: 'No active tab.' };
-  try {
-    return (await chrome.tabs.sendMessage(tab.id, message)) as ContentResponse;
-  } catch {
-    return {
-      ok: false,
-      error: 'Nexus cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
-    };
-  }
-}
+import { sendToActiveTab } from '../../shared/tabMessaging';
 
 /**
  * "This page" tab: scans the open tab, previews exactly what would be written
@@ -35,6 +23,14 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
   const [busy, setBusy] = useState(false);
 
   const settings = store.state?.settings;
+  const pageOverride = pageUrl ? settings?.applicationPageOverrides?.[pageUrl] : undefined;
+  const isApplication = pageOverride ?? scan?.looksLikeApplication ?? false;
+
+  const setApplicationOverride = (value: boolean) => {
+    if (!pageUrl) return;
+    const next = { ...(settings?.applicationPageOverrides ?? {}), [pageUrl]: value };
+    store.updateSettings({ applicationPageOverrides: next });
+  };
 
   const refresh = useCallback(async () => {
     setBusy(true);
@@ -93,8 +89,11 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
             Rescan
           </button>
         </div>
+        <p className="small muted" style={{ margin: '4px 0 0' }}>
+          Scan, autofill, or capture the scholarship on your active Chrome tab.
+        </p>
         <p className="small muted" style={{ margin: '4px 0 0', wordBreak: 'break-all' }}>
-          {pageTitle || pageUrl || 'Open a scholarship page in the active tab.'}
+          {pageTitle || pageUrl || 'Click the scholarship tab in Chrome, then tap Rescan.'}
         </p>
 
         {error && (
@@ -115,10 +114,23 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
                 <span className="label">Fillable</span>
               </div>
               <div className="metric">
-                <span className="value">{scan.looksLikeApplication ? 'Yes' : 'No'}</span>
-                <span className="label">Application?</span>
+                <button
+                  type="button"
+                  className={`metric-toggle${isApplication ? ' active' : ''}`}
+                  title="Toggle whether this page is an application form"
+                  onClick={() => setApplicationOverride(!isApplication)}
+                  disabled={!pageUrl}
+                >
+                  <span className="value">{isApplication ? 'Yes' : 'No'}</span>
+                  <span className="label">Application?</span>
+                </button>
               </div>
             </div>
+            {pageOverride !== undefined && scan && pageOverride !== scan.looksLikeApplication && (
+              <p className="small muted" style={{ margin: '6px 0 0' }}>
+                You marked this page as {pageOverride ? 'an application' : 'not an application'}.
+              </p>
+            )}
             <div className="row wrap" style={{ gap: 6, marginTop: 8 }}>
               <button type="button" className="btn primary tiny" onClick={() => void fill()} disabled={busy || scan.fillableFields === 0}>
                 Fill {scan.fillableFields} field{scan.fillableFields === 1 ? '' : 's'}

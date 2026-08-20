@@ -1,6 +1,7 @@
 import { findHighImpactGaps, profileCompleteness } from '../../core/profile';
 import { trackerStats } from '../../core/tracker';
 import { Chip, DeadlineChip, Progress, money } from './common';
+import { PageView } from './PageView';
 import type { AppStore } from '../useAppState';
 import type { TabId } from '../App';
 
@@ -18,6 +19,8 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
 
   return (
     <div className="view">
+      <PageView store={store} embedded />
+
       {isNew && (
         <div className="card">
           <h2 style={{ margin: 0 }}>Stop guessing which scholarships are worth your time</h2>
