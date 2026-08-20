@@ -22,8 +22,7 @@ export function isEmailVerified(session: SupabaseSession): boolean {
   return Boolean(session.user.email_confirmed_at);
 }
 
-export const CONFIRMATION_EMAIL_SENDER =
-  'Supabase Auth (default: noreply@mail.app.supabase.io, or your custom SMTP sender)';
+export const CONFIRMATION_EMAIL_SENDER = 'Nexus';
 
 export interface SignUpResult {
   session?: SupabaseSession;
@@ -74,16 +73,22 @@ function parseAuthError(body: string, status: number): string {
       error_code?: string;
     };
     if (parsed.error_code === 'weak_password') {
-      return 'Choose a stronger password — at least 8 characters and not a common or leaked password.';
+      return 'Use a stronger password: at least 8 characters with a mix of letters and numbers.';
     }
     if (parsed.error_code === 'user_already_registered') {
       return 'An account with this email already exists. Sign in instead.';
     }
     if (parsed.error_code === 'email_not_confirmed' || message.toLowerCase().includes('email not confirmed')) {
-      return 'Email not confirmed yet. Turn off **Confirm email** in Supabase for instant sign-in, or verify your email first.';
+      return 'Confirm your email first — open the link we sent you, then sign in here.';
+    }
+    if (parsed.error_code === 'invalid_credentials' || message.toLowerCase().includes('invalid login')) {
+      return 'Email or password is incorrect. Try again or reset your password on the website.';
     }
     message = parsed.msg ?? parsed.message ?? parsed.error_description ?? message;
   } catch { /* plain-text error */ }
+  if (message.includes('Supabase') || message.includes('request failed')) {
+    return 'Something went wrong. Check your connection and try again.';
+  }
   return message;
 }
 
@@ -152,7 +157,7 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
       session,
       signedIn: true,
       verificationOptional: !isEmailVerified(session),
-      message: `Account created — you are signed in and syncing.${verifyHint}`,
+      message: `You're in! Your profile and applications will stay up to date.${verifyHint}`,
     };
   }
 
@@ -167,16 +172,15 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
       session,
       signedIn: true,
       verificationOptional: !isEmailVerified(session),
-      message: `Account created — you are signed in and syncing.${verifyHint}`,
+      message: `You're in! Your profile and applications will stay up to date.${verifyHint}`,
     };
   } catch {
     return {
       signedIn: false,
       verificationOptional: true,
       message:
-        `Account created for ${email}, but sign-in is blocked until email is confirmed. ` +
-        `To get instant access (sign up and use Nexus right away), disable **Confirm email** in Supabase: ` +
-        `Authentication → Providers → Email. Verification emails are sent by ${CONFIRMATION_EMAIL_SENDER} — check spam or configure custom SMTP in Supabase Auth settings.`,
+        `We created your account. Confirm your email using the link we sent you, then sign in here. ` +
+        `Tip: it is easier to sign up on nexusnext.lovable.app first.`,
     };
   }
 }
@@ -193,7 +197,7 @@ export async function resendConfirmationEmail(email: string): Promise<string> {
       }),
     },
   );
-  return `Verification email sent to ${email} from ${CONFIRMATION_EMAIL_SENDER}. Check spam if it does not arrive within a few minutes.`;
+  return `Verification email sent to ${email}. Check your inbox and spam folder.`;
 }
 
 export async function signIn(email: string, password: string): Promise<SupabaseSession> {

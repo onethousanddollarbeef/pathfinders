@@ -22,15 +22,14 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
         <div className="card">
           <h2 style={{ margin: 0 }}>Start on the website</h2>
           <p className="small muted" style={{ margin: '6px 0' }}>
-            Create your account and profile at nexusnext.lovable.app first, then sign in under Account here to sync
-            your scholarships and applications.
+            Create your account on the Nexus website first, then sign in here under Account to load your profile.
           </p>
           <div className="row wrap" style={{ gap: 8 }}>
             <a className="btn primary" href="https://nexusnext.lovable.app/auth" target="_blank" rel="noreferrer">
-              Create account on Nexus
+              Get started on Nexus
             </a>
             <button type="button" className="btn" onClick={() => onNavigate('account')}>
-              Sign in on extension
+              Sign in
             </button>
           </div>
         </div>
@@ -57,7 +56,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
           </div>
         </div>
         <p className="small muted" style={{ margin: '8px 0 0' }}>
-          Applications you capture stay on this device unless you sign in to sync them.
+          Sign in under Account to keep your work backed up across devices.
         </p>
       </div>
 

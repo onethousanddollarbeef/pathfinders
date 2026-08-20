@@ -158,7 +158,8 @@ export function ProfileView({ store }: { store: AppStore }) {
           </p>
         )}
         <p className="small muted" style={{ margin: '6px 0 0' }}>
-          Your data is cached on this device and, when signed in, synced securely to your Supabase account. Demographic fields are optional and only used to check eligibility rules.
+          Your profile is saved on this device. Sign in under Account to back it up and use it on the website too.
+          Demographic fields are optional — they only help us check which scholarships you qualify for.
         </p>
       </div>
 
