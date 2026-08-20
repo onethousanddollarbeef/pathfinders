@@ -2,16 +2,14 @@ import { useState } from 'react';
 import { useAppState } from './useAppState';
 import { DashboardView } from './components/DashboardView';
 import { ProfileView } from './components/ProfileView';
-import { DiscoverView } from './components/DiscoverView';
 import { TrackerView } from './components/TrackerView';
 import { AccountView } from './components/AccountView';
 
-export type TabId = 'home' | 'profile' | 'discover' | 'tracker' | 'account';
+export type TabId = 'home' | 'profile' | 'tracker' | 'account';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'profile', label: 'Profile' },
-  { id: 'discover', label: 'Discover' },
   { id: 'tracker', label: 'Applications' },
   { id: 'account', label: 'Account' },
 ];
@@ -49,6 +47,9 @@ export function App() {
           <div className="tagline">Find it, plan it, submit it.</div>
         </div>
         <span className="spacer" />
+        <a className="scholarship-sites" href="https://nexusnext.lovable.app" target="_blank" rel="noreferrer">
+          Scholarship sites
+        </a>
       </header>
 
       <nav className="tabs">
@@ -70,7 +71,6 @@ export function App() {
 
       {tab === 'home' && <DashboardView store={store} onNavigate={setTab} />}
       {tab === 'profile' && <ProfileView store={store} />}
-      {tab === 'discover' && <DiscoverView store={store} />}
       {tab === 'tracker' && <TrackerView store={store} />}
       {tab === 'account' && <AccountView store={store} />}
 

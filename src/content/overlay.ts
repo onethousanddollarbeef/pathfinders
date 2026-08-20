@@ -33,7 +33,7 @@ const STYLES = `
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #f97316, #c2410c);
     color: #ffffff;
     font-weight: 600;
   }
@@ -42,7 +42,7 @@ const STYLES = `
   .header button {
     background: transparent;
     border: none;
-    color: #e0e7ff;
+    color: #ffedd5;
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
@@ -54,7 +54,7 @@ const STYLES = `
   .actions { display: flex; gap: 8px; margin-top: 10px; }
   button.primary {
     flex: 1;
-    background: #4f46e5;
+    background: #ea580c;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -62,7 +62,7 @@ const STYLES = `
     font-weight: 600;
     cursor: pointer;
   }
-  button.primary:hover { background: #4338ca; }
+  button.primary:hover { background: #c2410c; }
   button.ghost {
     background: #f3f4f6;
     color: #374151;
@@ -75,8 +75,8 @@ const STYLES = `
   li { margin-bottom: 3px; }
   .pill {
     display: inline-block;
-    background: #eef2ff;
-    color: #3730a3;
+    background: #ffedd5;
+    color: #9a3412;
     border-radius: 999px;
     padding: 1px 8px;
     font-size: 11px;
@@ -93,9 +93,9 @@ function ensureHighlightStyles(): void {
   style.id = 'scholarpath-highlight-styles';
   style.textContent = `
     .${HIGHLIGHT_CLASS} {
-      outline: 2px solid #6366f1 !important;
+      outline: 2px solid #f97316 !important;
       outline-offset: 1px !important;
-      background-color: rgba(99, 102, 241, 0.06) !important;
+      background-color: rgba(249, 115, 22, 0.08) !important;
       transition: outline-color 1.2s ease-out;
     }
   `;

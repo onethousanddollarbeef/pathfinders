@@ -1,11 +1,11 @@
 :root {
-  --bg: #f7f7fb;
+  --bg: #fff7ed;
   --surface: #ffffff;
-  --border: #e6e6ef;
-  --text: #14142b;
-  --muted: #6b7280;
-  --accent: #4f46e5;
-  --accent-soft: #eef2ff;
+  --border: #fed7aa;
+  --text: #431407;
+  --muted: #78716c;
+  --accent: #ea580c;
+  --accent-soft: #ffedd5;
   --green: #047857;
   --green-soft: #ecfdf5;
   --amber: #b45309;
@@ -55,7 +55,7 @@ p {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, #f97316, #c2410c);
   color: #fff;
 }
 
@@ -73,6 +73,23 @@ p {
 
 .app-header .spacer {
   flex: 1;
+}
+
+.scholarship-sites {
+  flex: none;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.scholarship-sites:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .tabs {
@@ -251,8 +268,8 @@ button {
 }
 
 .btn:hover {
-  border-color: #cfcfe4;
-  background: #fafaff;
+  border-color: #fdba74;
+  background: #fff7ed;
 }
 
 .btn.primary {
@@ -262,7 +279,7 @@ button {
 }
 
 .btn.primary:hover {
-  background: #4338ca;
+  background: #c2410c;
 }
 
 .btn.subtle {
@@ -341,7 +358,7 @@ textarea {
   padding: 1px 8px;
   font-size: 11px;
   font-weight: 600;
-  background: #f1f1f8;
+  background: #f5f5f4;
   color: #4b5563;
   white-space: nowrap;
 }
@@ -372,7 +389,7 @@ textarea {
 
 .progress {
   height: 6px;
-  background: #ececf6;
+  background: #e7e5e4;
   border-radius: 999px;
   overflow: hidden;
 }
@@ -415,7 +432,7 @@ textarea {
 }
 
 .metric {
-  background: #fafafd;
+  background: #fffbf7;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 5px 6px;
@@ -560,8 +577,8 @@ table.compare th.metric-label {
 
 .banner.info {
   background: var(--accent-soft);
-  border-color: #dbdbfa;
-  color: #3730a3;
+  border-color: #fdba74;
+  color: #9a3412;
 }
 
 .banner.warn {
@@ -600,7 +617,7 @@ details[open] summary::before {
   width: 34px;
   height: 4px;
   border-radius: 999px;
-  background: #ececf6;
+  background: #e7e5e4;
   overflow: hidden;
   flex: none;
 }

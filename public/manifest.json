@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ScholarPath — Scholarship Strategy",
   "version": "0.1.0",
-  "description": "Build a student profile, find scholarships you actually qualify for, compare them by value per hour, get a prioritized plan, and autofill applications.",
+  "description": "Build a student profile, track scholarship applications, and autofill application forms.",
   "minimum_chrome_version": "114",
   "permissions": [
     "storage",

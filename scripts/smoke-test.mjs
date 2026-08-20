@@ -165,20 +165,24 @@ async function main() {
 
     const tabs = await panel.$$eval('.tabs .tab', (nodes) => nodes.map((node) => node.textContent.trim()));
     check(
-      'side panel renders the consolidated tabs',
-      tabs.length === 5 && !tabs.includes('Compare') && !tabs.includes('Plan') && !tabs.includes('Page'),
+      'side panel omits discovery, comparison, and planning pages',
+      tabs.length === 4 && !tabs.includes('Discover') && !tabs.includes('Compare') && !tabs.includes('Plan'),
       tabs.join(', '),
+    );
+    const scholarshipSites = await panel.$eval('.scholarship-sites', (link) => ({
+      label: link.textContent.trim(),
+      href: link.href,
+    }));
+    check(
+      'header links to Scholarship sites',
+      scholarshipSites.label === 'Scholarship sites' && scholarshipSites.href === 'https://nexusnext.lovable.app/',
+      `${scholarshipSites.label} — ${scholarshipSites.href}`,
     );
     check('side panel has no page errors', panelErrors.length === 0, panelErrors.join(' | '));
 
     const homeStats = await panel.$$eval('.metric .value', (nodes) => nodes.map((node) => node.textContent.trim()));
     check('home shows computed metrics', homeStats.length >= 3, homeStats.slice(0, 3).join(' / '));
 
-    await clickTab(panel, 'Discover');
-    const cardCount = await panel.$$eval('.match-card', (nodes) => nodes.length);
-    check('discover does not show a scholarship catalog', cardCount === 0, `${cardCount} cards`);
-    const discoverCopy = await panel.$eval('.view', (node) => node.textContent);
-    check('discover directs students to save applications they find', discoverCopy.includes('save the application'), discoverCopy);
     const continueButtons = await panel.$$eval('.continue-footer .continue-button', (nodes) => nodes.length);
     check('page has a save and continue action', continueButtons === 1, `${continueButtons} buttons`);
 
