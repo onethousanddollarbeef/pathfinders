@@ -5,6 +5,8 @@ import { STATUS_LABELS, progress, resolveDeadline, trackerStats } from '../../co
 import { Chip, EmptyState, Progress, money } from './common';
 import type { AppStore } from '../useAppState';
 import type { ApplicationStatus, Scholarship, TrackedApplication } from '../../core/types';
+import type { CapturedScholarship } from '../../core/pageCapture';
+import { CaptureReview } from './CaptureReview';
 
 const FILTERS: { value: ApplicationStatus | 'all' | 'active'; label: string }[] = [
   { value: 'active', label: 'Active' },
@@ -15,7 +17,15 @@ const FILTERS: { value: ApplicationStatus | 'all' | 'active'; label: string }[] 
   { value: 'all', label: 'All' },
 ];
 
-export function TrackerView({ store }: { store: AppStore }) {
+export function TrackerView({
+  store,
+  captureReview,
+  onCaptureReviewDone,
+}: {
+  store: AppStore;
+  captureReview?: CapturedScholarship;
+  onCaptureReviewDone?: () => void;
+}) {
   const [filter, setFilter] = useState<ApplicationStatus | 'all' | 'active'>('all');
   const state = store.state;
 
@@ -26,15 +36,23 @@ export function TrackerView({ store }: { store: AppStore }) {
 
   if (!state) return null;
 
-  if (state.applications.length === 0) {
+  if (state.applications.length === 0 && !captureReview) {
     return (
       <div className="view">
         <EmptyState
-          title="No past applications yet"
-          hint="When you find an application online, save it with the current-page tools under Account. It will appear here."
+          title="No applications yet"
+          hint="On Home, use Capture scholarship while viewing a listing. It saves here automatically."
         />
       </div>
     );
+  }
+
+  const reviewBlock = captureReview && onCaptureReviewDone && (
+    <CaptureReview captured={captureReview} store={store} onDone={onCaptureReviewDone} />
+  );
+
+  if (state.applications.length === 0) {
+    return <div className="view">{reviewBlock}</div>;
   }
 
   const visible = state.applications
@@ -54,6 +72,7 @@ export function TrackerView({ store }: { store: AppStore }) {
 
   return (
     <div className="view">
+      {reviewBlock}
       <div className="card">
         <h2 style={{ margin: 0 }}>Past applications</h2>
         <div className="grid-3" style={{ marginTop: 8 }}>

@@ -1,24 +1,31 @@
 import { useCallback, useEffect, useState } from 'react';
-import { matchScholarship } from '../../core/matching';
-import { Chip, EmptyState, money } from './common';
+import { EmptyState } from './common';
 import type { AppStore } from '../useAppState';
 import type { FieldPreview } from '../../shared/messages';
 import type { CapturedScholarship } from '../../core/pageCapture';
 import type { FillReport, FormScan } from '../../core/autofill';
 import { sendToActiveTab } from '../../shared/tabMessaging';
+import { takePendingCaptureReview } from '../../shared/pendingCapture';
 
 /**
  * "This page" tab: scans the open tab, previews exactly what would be written
  * where, fills it, and can capture the listing into the catalog.
  */
-export function PageView({ store, embedded = false }: { store: AppStore; embedded?: boolean }) {
+export function PageView({
+  store,
+  embedded = false,
+  onCaptured,
+}: {
+  store: AppStore;
+  embedded?: boolean;
+  onCaptured?: (captured: CapturedScholarship) => void;
+}) {
   const [scan, setScan] = useState<FormScan | undefined>();
   const [pageTitle, setPageTitle] = useState('');
   const [pageUrl, setPageUrl] = useState('');
   const [previews, setPreviews] = useState<FieldPreview[]>([]);
   const [missing, setMissing] = useState<{ key: string; label: string }[]>([]);
   const [report, setReport] = useState<FillReport | undefined>();
-  const [captured, setCaptured] = useState<CapturedScholarship | undefined>();
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
 
@@ -76,7 +83,10 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
     setBusy(true);
     const response = await sendToActiveTab({ type: 'sp:capture-scholarship' });
     if (!response.ok) setError(response.error);
-    else if (response.type === 'capture') setCaptured(response.captured);
+    else if (response.type === 'capture') {
+      await takePendingCaptureReview();
+      onCaptured?.(response.captured);
+    }
     setBusy(false);
   };
 
@@ -209,8 +219,6 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
         <EmptyState title="No form fields here" hint="Open the actual application form, then rescan." />
       )}
 
-      {captured && <CaptureReview captured={captured} store={store} onDone={() => setCaptured(undefined)} />}
-
       <div className="card">
         <h3>Autofill settings</h3>
         <label className="checkbox">
@@ -232,138 +240,6 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
         <p className="small muted" style={{ margin: '8px 0 0' }}>
           Passwords, SSN, and payment fields are never filled. Existing answers are never overwritten.
         </p>
-      </div>
-    </div>
-  );
-}
-
-function CaptureReview({
-  captured,
-  store,
-  onDone,
-}: {
-  captured: CapturedScholarship;
-  store: AppStore;
-  onDone: () => void;
-}) {
-  const [draft, setDraft] = useState(captured.draft);
-  const profile = store.state?.profile;
-  const match = profile ? matchScholarship(draft, profile) : undefined;
-
-  return (
-    <div className="card">
-      <h3>Captured from this page</h3>
-      {captured.uncertainFields.length > 0 && (
-        <div className="banner warn" style={{ marginBottom: 8 }}>
-          Could not confidently read: {captured.uncertainFields.join(', ')}.
-          {draft.amountUnknown
-            ? ' The page link will still be saved to Applications — add the award amount later if you know it.'
-            : ' Check the values below before saving.'}
-        </div>
-      )}
-      <div className="stack">
-        <label className="field">
-          Page link
-          <input type="url" readOnly value={draft.url} />
-        </label>
-        <label className="field">
-          Name
-          <input type="text" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-        </label>
-        <div className="grid-2">
-          <label className="field">
-            Award (min)
-            <input
-              type="number"
-              placeholder={draft.amountUnknown ? 'Unknown' : undefined}
-              value={draft.amountUnknown ? '' : draft.amountMin || ''}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  amountUnknown: false,
-                  amountMin: Number(event.target.value),
-                })
-              }
-            />
-          </label>
-          <label className="field">
-            Award (max)
-            <input
-              type="number"
-              placeholder={draft.amountUnknown ? 'Unknown' : undefined}
-              value={draft.amountUnknown ? '' : draft.amountMax || ''}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  amountUnknown: false,
-                  amountMax: Number(event.target.value),
-                })
-              }
-            />
-          </label>
-        </div>
-        <div className="grid-2">
-          <label className="field">
-            Deadline
-            <input type="date" value={draft.deadline} onChange={(event) => setDraft({ ...draft, deadline: event.target.value })} />
-          </label>
-          <label className="field">
-            Essays required
-            <input
-              type="number"
-              value={draft.requirements.essayCount}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  requirements: { ...draft.requirements, essayCount: Number(event.target.value) },
-                })
-              }
-            />
-          </label>
-        </div>
-      </div>
-
-      {captured.evidence.length > 0 && (
-        <details style={{ marginTop: 8 }}>
-          <summary>Where these came from</summary>
-          <ul className="reasons">
-            {captured.evidence.map((item) => (
-              <li key={item.field}>
-                <span className="icon">•</span>
-                <span>
-                  <strong>{item.field}:</strong> {item.snippet}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      {match && (
-        <p className="small muted" style={{ margin: '8px 0 0' }}>
-          Estimated {match.effort.hours} hrs of work · {money(match.expectedValuePerHour)}/hr expected ·{' '}
-          <Chip tone={match.verdict === 'not-eligible' ? 'red' : 'green'}>{match.verdict}</Chip>
-        </p>
-      )}
-
-      <div className="row" style={{ gap: 6, marginTop: 8 }}>
-        <button
-          type="button"
-          className="btn primary tiny"
-          onClick={() => {
-            store.addCustomScholarship(draft);
-            store.saveScholarship(draft.id);
-            onDone();
-          }}
-        >
-          Save and track
-        </button>
-        {draft.amountUnknown && (
-          <span className="small muted">Saves this page link even without an award amount.</span>
-        )}
-        <button type="button" className="btn tiny" onClick={onDone}>
-          Discard
-        </button>
       </div>
     </div>
   );

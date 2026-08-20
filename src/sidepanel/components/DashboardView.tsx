@@ -1,12 +1,21 @@
 import { findHighImpactGaps, profileCompleteness } from '../../core/profile';
 import { trackerStats } from '../../core/tracker';
 import { Chip, DeadlineChip, Progress, money } from './common';
+import type { CapturedScholarship } from '../../core/pageCapture';
 import { PageView } from './PageView';
 import type { AppStore } from '../useAppState';
 import type { TabId } from '../App';
 
 /** Landing view: what to do next, what is at risk, and what is missing. */
-export function DashboardView({ store, onNavigate }: { store: AppStore; onNavigate: (tab: TabId) => void }) {
+export function DashboardView({
+  store,
+  onNavigate,
+  onCaptured,
+}: {
+  store: AppStore;
+  onNavigate: (tab: TabId) => void;
+  onCaptured?: (captured: CapturedScholarship) => void;
+}) {
   const state = store.state;
   const plan = store.plan;
   if (!state || !plan) return null;
@@ -19,7 +28,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
 
   return (
     <div className="view">
-      <PageView store={store} embedded />
+      <PageView store={store} embedded onCaptured={onCaptured} />
 
       {isNew && (
         <div className="card">

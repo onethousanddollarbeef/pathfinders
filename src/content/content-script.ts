@@ -12,6 +12,9 @@ import { captureScholarship } from '../core/pageCapture';
 import { loadState } from '../core/storage';
 import { Overlay, highlightElements } from './overlay';
 import type { ContentResponse, FieldPreview, PanelToContentMessage } from '../shared/messages';
+import { setPendingCaptureReview } from '../shared/pendingCapture';
+
+const INIT_KEY = '__nexusContentScriptLoaded';
 
 const INIT_KEY = '__nexusContentScriptLoaded';
 
@@ -95,7 +98,8 @@ async function handleMessage(message: PanelToContentMessage): Promise<ContentRes
         text: readablePageText(),
         description,
       });
-      getOverlay().showMessage(`Captured "${captured.draft.name}". Review it in the side panel.`);
+      await setPendingCaptureReview(captured);
+      getOverlay().showMessage(`Saved "${captured.draft.name}" to Applications — open Nexus to review.`);
       return { ok: true, type: 'capture', captured };
     }
     case 'sp:highlight-field': {
