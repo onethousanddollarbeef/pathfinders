@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scholarship Compass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">✦</span><span>Scholarship<br /><strong>Compass</strong></span></div>
+        <nav aria-label="Main navigation">
+          <button class="nav-item active" data-view="dashboard"><span>⌂</span> Dashboard</button>
+          <button class="nav-item" data-view="discover"><span>⌕</span> Discover</button>
+          <button class="nav-item" data-view="applications"><span>▣</span> Applications <b>4</b></button>
+          <button class="nav-item" data-view="profile"><span>♙</span> My profile</button>
+        </nav>
+        <div class="side-progress">
+          <div class="progress-icon">✓</div>
+          <strong>Profile 82% complete</strong>
+          <p>Add activities to unlock more matches.</p>
+          <div class="bar"><i style="width:82%"></i></div>
+          <button data-view="profile">Complete profile →</button>
+        </div>
+        <button class="settings">⚙ &nbsp; Settings</button>
+      </aside>
+
+      <main>
+        <header>
+          <div><p class="eyebrow">WEDNESDAY, AUGUST 12</p><h1>Good morning, Maya <span>👋</span></h1><p>Your next scholarship win starts here.</p></div>
+          <div class="header-actions"><button class="icon-button" title="Notifications">♢<i></i></button><div class="avatar">MJ</div></div>
+        </header>
+
+        <section id="dashboard" class="view active">
+          <div class="stats">
+            <article><span class="stat-icon purple">◎</span><div><p>Potential awards</p><strong>$24,500</strong><small>across 8 matches</small></div></article>
+            <article><span class="stat-icon coral">◷</span><div><p>Next deadline</p><strong>6 days</strong><small>Future Builders Fund</small></div></article>
+            <article><span class="stat-icon teal">✓</span><div><p>Applications</p><strong>1 submitted</strong><small>1 started · 2 saved</small></div></article>
+          </div>
+
+          <div class="section-heading"><div><h2>Your priority plan</h2><p>Focused on impact, fit, and what you can finish next.</p></div><button class="text-button" data-view="applications">View all applications →</button></div>
+          <article class="priority-card">
+            <div class="priority-rank"><span>YOUR #1 PRIORITY</span><strong>01</strong></div>
+            <div class="priority-main">
+              <div class="card-top"><span class="category">STEM</span><span class="match">● 96% match</span><button class="bookmark active" data-id="future-builders">♥</button></div>
+              <h3>Future Builders Scholarship</h3><p class="sponsor">National Engineering Foundation</p>
+              <div class="metrics"><div><small>AWARD</small><b>$10,000</b></div><div><small>DEADLINE</small><b>Aug 18 <em>6 days</em></b></div><div><small>EFFORT</small><b><i class="effort">●●○</i> Medium</b></div></div>
+              <div class="why"><span>✦</span><div><strong>Why you're a great fit</strong><p>Your 3.8 GPA, Texas residency, and intended Computer Science major meet every core requirement.</p></div><button class="why-toggle">⌃</button></div>
+              <div class="card-actions"><button class="primary apply-button" data-id="future-builders">Continue application <span>→</span></button><button class="secondary details-button">View details</button><span class="time">◷ About 45 min left</span></div>
+            </div>
+          </article>
+
+          <div class="section-heading compact"><div><h2>More strong matches</h2><p>Scholarships selected around your story.</p></div><button class="filter">☷ &nbsp;Filter</button></div>
+          <div class="match-grid" id="match-grid"></div>
+          <button class="browse" data-view="discover">Browse all 8 matches <span>→</span></button>
+        </section>
+
+        <section id="discover" class="view empty-view"><span class="large-icon">⌕</span><h2>Discover scholarships</h2><p>We found 8 opportunities matched to your profile.</p><button class="primary back-home">See top matches</button></section>
+        <section id="applications" class="view empty-view"><span class="large-icon">▣</span><h2>Your application tracker</h2><div id="tracker" class="tracker"></div></section>
+        <section id="profile" class="view profile-view">
+          <div class="section-heading"><div><h2>Student profile</h2><p>We'll use this information to match scholarships and fill applications.</p></div><button id="save-profile" class="primary">Save profile</button></div>
+          <form id="profile-form"></form>
+          <div class="autofill-panel"><div><span class="stat-icon teal">✦</span><div><h3>Fill the application on this page</h3><p>Use your saved profile to securely complete recognized fields.</p></div></div><button id="autofill" class="primary">Autofill page</button></div>
+        </section>
+      </main>
+      <div id="toast" role="status"></div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
