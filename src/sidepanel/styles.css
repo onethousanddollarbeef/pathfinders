@@ -1,19 +1,23 @@
 :root {
-  --bg: #fff7ed;
-  --surface: #ffffff;
-  --border: #fed7aa;
-  --text: #431407;
-  --muted: #78716c;
-  --accent: #ea580c;
-  --accent-soft: #ffedd5;
+  /* Matches nexusnext.lovable.app warm cream + orange palette */
+  --bg: #faf7f2;
+  --surface: #fdfcfa;
+  --border: #e8e2da;
+  --text: #3d3429;
+  --muted: #7a6f65;
+  --accent: #e07a32;
+  --accent-hover: #c96828;
+  --accent-soft: #fef3e8;
   --green: #047857;
   --green-soft: #ecfdf5;
   --amber: #b45309;
   --amber-soft: #fffbeb;
   --red: #b91c1c;
   --red-soft: #fef2f2;
-  --radius: 10px;
-  --shadow: 0 1px 2px rgba(17, 24, 39, 0.06), 0 4px 12px rgba(17, 24, 39, 0.04);
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(61, 52, 41, 0.05), 0 8px 24px rgba(61, 52, 41, 0.06);
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
 }
 
 * {
@@ -28,19 +32,33 @@ body,
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle, rgba(224, 122, 50, 0.08) 1px, transparent 1.2px),
+    radial-gradient(900px 600px at 50% -10%, rgba(254, 243, 232, 0.9), transparent 70%);
+  background-size: 22px 22px, auto;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   line-height: 1.5;
 }
 
-h1 {
-  font-family: Georgia, serif;
+h1,
+h2,
+h3,
+.auth-title,
+.section-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
-p {
-  font-family: 'Poppins', sans-serif;
+p,
+label,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-body);
 }
 
 .app {
@@ -53,22 +71,46 @@ p {
 .app-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, #f97316, #c2410c);
-  color: #fff;
+  background: var(--surface);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.logo-shell {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(61, 52, 41, 0.04);
 }
 
 .app-header h1 {
-  font-size: 14px;
+  font-size: 15px;
   margin: 0;
-  font-weight: 650;
-  letter-spacing: 0.2px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .app-header .tagline {
-  font-size: 11px;
-  opacity: 0.85;
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.3;
+  margin-top: 1px;
 }
 
 .app-header .spacer {
@@ -77,18 +119,18 @@ p {
 
 .app-logo {
   flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  object-fit: cover;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 
 .scholarship-sites {
   flex: none;
-  padding: 6px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 8px;
-  color: #fff;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent);
   font-size: 11px;
   font-weight: 650;
   line-height: 1.2;
@@ -97,7 +139,8 @@ p {
 }
 
 .scholarship-sites:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--accent-soft);
+  border-color: #f0c9a8;
 }
 
 .tabs {
@@ -276,8 +319,8 @@ button {
 }
 
 .btn:hover {
-  border-color: #fdba74;
-  background: #fff7ed;
+  border-color: #d9d0c6;
+  background: #fff;
 }
 
 .btn.primary {
@@ -287,7 +330,67 @@ button {
 }
 
 .btn.primary:hover {
-  background: #c2410c;
+  background: var(--accent-hover);
+}
+
+.auth-card {
+  padding: 14px;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.auth-subtitle {
+  margin: 4px 0 0;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.auth-switch {
+  width: 100%;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.password-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.password-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.password-toggle {
+  flex: none;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 7px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: #f0c9a8;
+}
+
+.section-heading {
+  margin: 0;
+  font-size: 15px;
 }
 
 .btn.subtle {
@@ -585,8 +688,8 @@ table.compare th.metric-label {
 
 .banner.info {
   background: var(--accent-soft);
-  border-color: #fdba74;
-  color: #9a3412;
+  border-color: #f0c9a8;
+  color: #8a4b1f;
 }
 
 .banner.warn {

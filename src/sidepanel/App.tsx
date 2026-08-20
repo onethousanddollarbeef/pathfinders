@@ -43,15 +43,19 @@ export function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <img className="app-logo" src="/logo.png" alt="Nexus" />
-        <div>
-          <h1>Nexus</h1>
-          <div className="tagline">Find scholarships, track applications, submit faster.</div>
+        <div className="brand-lockup">
+          <div className="logo-shell">
+            <img className="app-logo" src="/logo.png" alt="Nexus" />
+          </div>
+          <div>
+            <h1>Nexus</h1>
+            <div className="tagline">Your scholarship application command center</div>
+          </div>
         </div>
         <span className="spacer" />
         <a
           className="scholarship-sites"
-          href="https://nexusnext.lovable.app"
+          href="https://nexusnext.lovable.app/explore"
           target="_blank"
           rel="noreferrer"
         >

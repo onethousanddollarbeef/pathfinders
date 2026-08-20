@@ -20,10 +20,9 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
     <div className="view">
       {isNew && (
         <div className="card">
-          <h2 style={{ margin: 0 }}>Let's find your money</h2>
+          <h2 style={{ margin: 0 }}>Stop guessing which scholarships are worth your time</h2>
           <p className="small muted" style={{ margin: '6px 0' }}>
-            Fill in your profile, find an application on the web, then save it with the current-page tools under
-            Account. Sign in there to sync your work with nexusnext.lovable.app.
+            Build your profile, save applications from the web, and track each award through Saved → In progress → Submitted.
           </p>
           <button type="button" className="btn primary" onClick={() => onNavigate('profile')}>
             Start your profile
@@ -44,7 +43,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
           </div>
           <div className="metric">
             <span className="value">{stats.submitted}</span>
-            <span className="label">Complete</span>
+            <span className="label">Submitted</span>
           </div>
           <div className="metric">
             <span className="value">{money(stats.wonValue)}</span>
@@ -132,7 +131,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
           </div>
           <div className="metric">
             <span className="value">{stats.submitted}</span>
-            <span className="label">Complete</span>
+            <span className="label">Submitted</span>
           </div>
         </div>
         <p className="small muted" style={{ margin: '8px 0 0' }}>

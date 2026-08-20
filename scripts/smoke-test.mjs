@@ -276,9 +276,9 @@ async function main() {
     check('applications tab shows saved applications', tracked >= 3, `${tracked} tracked`);
 
     await clickTab(panel, 'Account');
-    const accountHeading = await panel.$eval('.card h2', (node) => node.textContent.trim());
-    check('account tab renders sign-in section', accountHeading.includes('Account'), accountHeading);
-    const pageTools = await panel.$eval('.combined-section h2', (node) => node.textContent.trim());
+    const accountHeading = await panel.$eval('.auth-title', (node) => node.textContent.trim());
+    check('account tab renders sign-in section', accountHeading.includes('Welcome back') || accountHeading.includes('Create'), accountHeading);
+    const pageTools = await panel.$eval('.section-heading', (node) => node.textContent.trim());
     check('account tab embeds current page tools', pageTools.includes('Current page'), pageTools);
 
     // --- Autofill on a real form ----------------------------------------------

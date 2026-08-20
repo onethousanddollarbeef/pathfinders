@@ -11,7 +11,7 @@ import { matchAll } from '../core/matching';
 import { buildPlan } from '../core/planner';
 import { createTrackedApplication, setStatus, toggleTask } from '../core/tracker';
 import { loadState, saveState, subscribeToState } from '../core/storage';
-import { getSession, pullState, pushState, signIn, signOut, signUp } from '../core/supabase';
+import { getSession, pullState, pushState, resendConfirmationEmail, signIn, signOut, signUp } from '../core/supabase';
 import type { SupabaseSession } from '../core/supabase';
 import type { AppState, Settings } from '../core/storage';
 import type {
@@ -44,6 +44,7 @@ export interface AppStore {
   syncError: string | undefined;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<string>;
+  resendConfirmation: (email: string) => Promise<string>;
   signOut: () => Promise<void>;
 }
 
@@ -177,6 +178,8 @@ export function useAppState(): AppStore {
       }
       return result.message;
     },
+
+    resendConfirmation: async (email) => resendConfirmationEmail(email),
 
     signOut: async () => {
       await signOut(session);
