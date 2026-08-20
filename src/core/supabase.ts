@@ -3,12 +3,14 @@ import type { AppState } from './storage';
 export const SUPABASE_PROJECT_ID = 'zrqfanveghxodzavjrkb';
 export const SUPABASE_URL = 'https://zrqfanveghxodzavjrkb.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_t6NOr6t__1Sy01GLMVs77w_w35aLL37';
+export const NEXUS_AUTH_REDIRECT_URL = 'https://nexusnext.lovable.app/auth';
 
 const SESSION_KEY = 'scholarpath.supabase.session.v1';
 
 export interface SupabaseUser {
   id: string;
   email?: string;
+  email_confirmed_at?: string;
 }
 
 export interface SupabaseSession {
@@ -16,6 +18,12 @@ export interface SupabaseSession {
   refresh_token: string;
   expires_at?: number;
   user: SupabaseUser;
+}
+
+export interface SignUpResult {
+  session?: SupabaseSession;
+  message: string;
+  confirmationRequired: boolean;
 }
 
 function storageArea(): chrome.storage.StorageArea | undefined {
@@ -72,18 +80,54 @@ async function request<T>(path: string, init: RequestInit = {}, accessToken?: st
   return (body ? JSON.parse(body) : undefined) as T;
 }
 
-export async function signUp(email: string, password: string): Promise<{ session?: SupabaseSession; message: string }> {
-  const result = await request<{ access_token?: string; refresh_token?: string; expires_in?: number; user: SupabaseUser }>(
+export async function signUp(email: string, password: string): Promise<SignUpResult> {
+  const result = await request<{
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    user: SupabaseUser;
+  }>(
     '/auth/v1/signup',
-    { method: 'POST', body: JSON.stringify({ email, password }) },
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email,
+        password,
+        options: { emailRedirectTo: NEXUS_AUTH_REDIRECT_URL },
+      }),
+    },
   );
+
   if (!result.access_token || !result.refresh_token) {
-    return { message: 'Check your email to confirm your account, then sign in.' };
+    return {
+      confirmationRequired: true,
+      message: `Confirmation email sent to ${email}. Open the link in that message, then sign in here to sync.`,
+    };
   }
-  const session = { ...result, access_token: result.access_token, refresh_token: result.refresh_token,
-    expires_at: result.expires_in ? Math.floor(Date.now() / 1000) + result.expires_in : undefined };
+
+  const session = {
+    ...result,
+    access_token: result.access_token,
+    refresh_token: result.refresh_token,
+    expires_at: result.expires_in ? Math.floor(Date.now() / 1000) + result.expires_in : undefined,
+  };
   await setSession(session);
-  return { session, message: 'Account created and sync enabled.' };
+  return { session, confirmationRequired: false, message: 'Account created and sync enabled.' };
+}
+
+export async function resendConfirmationEmail(email: string): Promise<string> {
+  await request(
+  `/auth/v1/resend?redirect_to=${encodeURIComponent(NEXUS_AUTH_REDIRECT_URL)}`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: NEXUS_AUTH_REDIRECT_URL },
+      }),
+    },
+  );
+  return `Confirmation email resent to ${email}.`;
 }
 
 export async function signIn(email: string, password: string): Promise<SupabaseSession> {

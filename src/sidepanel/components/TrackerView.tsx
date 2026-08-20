@@ -10,7 +10,7 @@ const FILTERS: { value: ApplicationStatus | 'all' | 'active'; label: string }[] 
   { value: 'active', label: 'Active' },
   { value: 'saved', label: 'Saved' },
   { value: 'started', label: 'In progress' },
-  { value: 'submitted', label: 'Complete' },
+  { value: 'submitted', label: 'Submitted' },
   { value: 'awarded', label: 'Awarded' },
   { value: 'all', label: 'All' },
 ];

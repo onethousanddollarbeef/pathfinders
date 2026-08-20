@@ -2,23 +2,52 @@ import { useState } from 'react';
 import type { AppStore } from '../useAppState';
 import { PageView } from './PageView';
 
+type AuthMode = 'sign-in' | 'create';
+
 export function AccountView({ store }: { store: AppStore }) {
+  const [mode, setMode] = useState<AuthMode>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
-  const submit = async (mode: 'in' | 'up') => {
+  const submit = async () => {
     setBusy(true);
     setMessage(undefined);
     try {
-      if (mode === 'in') {
+      if (mode === 'sign-in') {
         await store.signIn(email.trim(), password);
+        setAwaitingConfirmation(false);
         setMessage('Signed in. Your Nexus data is now synced.');
       } else {
-        setMessage(await store.signUp(email.trim(), password));
+        const result = await store.signUp(email.trim(), password);
+        const needsConfirmation = result.includes('Confirmation email sent');
+        setAwaitingConfirmation(needsConfirmation);
+        setMessage(result);
       }
-      setPassword('');
+      if (mode === 'sign-in') setPassword('');
+    } catch (error) {
+      const text = error instanceof Error ? error.message : String(error);
+      if (text.toLowerCase().includes('email not confirmed')) {
+        setAwaitingConfirmation(true);
+        setMessage('Confirm your email first, then sign in. You can resend the confirmation link below.');
+      } else {
+        setMessage(text);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    if (!email.trim()) return;
+    setBusy(true);
+    setMessage(undefined);
+    try {
+      setMessage(await store.resendConfirmation(email.trim()));
+      setAwaitingConfirmation(true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -26,46 +55,106 @@ export function AccountView({ store }: { store: AppStore }) {
     }
   };
 
+  const switchMode = (next: AuthMode) => {
+    setMode(next);
+    setMessage(undefined);
+    setAwaitingConfirmation(false);
+    setPassword('');
+  };
+
   return (
     <div className="view">
-      <div className="card">
-        <h2 style={{ margin: '0 0 6px' }}>Account & sync</h2>
+      <div className="card auth-card">
         {store.session ? (
           <>
-            <p className="small" style={{ margin: '6px 0' }}><strong>{store.session.user.email}</strong></p>
+            <h2 className="auth-title">Your account</h2>
+            <p className="auth-subtitle small muted">Signed in and syncing with nexusnext.lovable.app</p>
+            <p className="small" style={{ margin: '10px 0 4px' }}><strong>{store.session.user.email}</strong></p>
             <p className="small muted">
-              Your profile, applications, settings, and saved scholarships are stored in Supabase and available on
-              nexusnext.lovable.app when you sign in with this same account.
+              Your profile, applications, settings, and saved scholarships stay in sync across the website and extension.
             </p>
-            <div className={`banner${store.syncStatus === 'error' ? ' warn' : ''}`}>
+            <div className={`banner${store.syncStatus === 'error' ? ' warn' : store.syncStatus === 'synced' ? ' success' : ' info'}`}>
               {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Supabase' : store.syncError ?? 'Saved locally'}
             </div>
             {store.syncError && <p className="small muted">{store.syncError}</p>}
             <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
           </>
         ) : (
-          <div className="stack">
-            <p className="small muted" style={{ margin: 0 }}>
-              Create an account or sign in to share your Nexus data with the website and extension. Data remains cached
-              on this device for offline use.
+          <>
+            <h2 className="auth-title">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2>
+            <p className="auth-subtitle small muted">
+              {mode === 'sign-in'
+                ? 'Sign in to see your scholarship matches and sync with the website.'
+                : 'One account for Nexus on the web and in this extension.'}
             </p>
-            <label className="field">Email
-              <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-            </label>
-            <label className="field">Password
-              <input type="password" autoComplete="current-password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} />
-            </label>
-            <div className="row">
-              <button type="button" className="btn primary" disabled={busy || !email || password.length < 6} onClick={() => void submit('in')}>Sign in</button>
-              <button type="button" className="btn" disabled={busy || !email || password.length < 6} onClick={() => void submit('up')}>Create account</button>
+
+            <div className="stack" style={{ marginTop: 12 }}>
+              <label className="field">
+                Email
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+              <label className="field">
+                Password
+                <div className="password-field">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+                    minLength={6}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </label>
+
+              <button
+                type="button"
+                className="btn primary auth-submit"
+                disabled={busy || !email || password.length < 6}
+                onClick={() => void submit()}
+              >
+                {mode === 'sign-in' ? 'Sign in' : 'Create account'}
+              </button>
+
+              {message && (
+                <div className={`banner${awaitingConfirmation ? ' info' : message.includes('Signed in') || message.includes('sync enabled') ? ' success' : ''}`}>
+                  {message}
+                </div>
+              )}
+
+              {awaitingConfirmation && (
+                <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resend()}>
+                  Resend confirmation email
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn subtle auth-switch"
+                onClick={() => switchMode(mode === 'sign-in' ? 'create' : 'sign-in')}
+              >
+                {mode === 'sign-in' ? 'New here? Create an account' : 'Already have an account? Sign in'}
+              </button>
             </div>
-            {message && <div className="banner">{message}</div>}
-          </div>
+          </>
         )}
       </div>
+
       <div className="combined-section">
         <div>
-          <h2>Current page tools</h2>
+          <h2 className="section-heading">Current page tools</h2>
           <p className="small muted">Scan, autofill, or capture the scholarship open in your active tab.</p>
         </div>
         <PageView store={store} embedded />
