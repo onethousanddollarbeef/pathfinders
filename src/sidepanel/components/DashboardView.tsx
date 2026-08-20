@@ -20,16 +20,17 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
     <div className="view">
       {isNew && (
         <div className="card">
-          <h2 style={{ margin: 0 }}>Start on the website</h2>
+          <h2 style={{ margin: 0 }}>Stop guessing which scholarships are worth your time</h2>
           <p className="small muted" style={{ margin: '6px 0' }}>
-            Create your account on the Nexus website first, then sign in here under Account to load your profile.
+            Create an account, build your profile, save applications from the web, and track each award through Saved →
+            In progress → Submitted.
           </p>
           <div className="row wrap" style={{ gap: 8 }}>
-            <a className="btn primary" href="https://nexusnext.lovable.app/auth" target="_blank" rel="noreferrer">
-              Get started on Nexus
-            </a>
-            <button type="button" className="btn" onClick={() => onNavigate('account')}>
-              Sign in
+            <button type="button" className="btn primary" onClick={() => onNavigate('account')}>
+              Create account
+            </button>
+            <button type="button" className="btn" onClick={() => onNavigate('profile')}>
+              Start your profile
             </button>
           </div>
         </div>
