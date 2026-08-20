@@ -165,6 +165,37 @@ describe('detectFields', () => {
     expect((fields[0].element as HTMLInputElement).value).toBe('female');
   });
 
+  it('fills yes/no eligibility questions from the profile', () => {
+    const eligible = makeProfile({
+      ...profile,
+      citizenship: 'us-citizen',
+      academics: {
+        ...profile.academics,
+        gpa: 3.7,
+        graduationYear: 2027,
+        level: 'high-school-senior',
+        enrollment: 'full-time',
+      },
+    });
+    render(`
+      <section>
+        <h3>Eligibility</h3>
+        <p>Will you be earning your high school diploma in the 2026-2027 school year?</p>
+        <label><input type="radio" name="q1" value="yes" /> Yes</label>
+        <label><input type="radio" name="q1" value="no" /> No</label>
+        <p>Is your weighted cumulative GPA a 3.3 or higher on a 4.0 scale, or the equivalent?</p>
+        <label><input type="radio" name="q2" value="yes" /> Yes</label>
+        <label><input type="radio" name="q2" value="no" /> No</label>
+        <p>Are you a US citizen or permanent resident?</p>
+        <label><input type="radio" name="q3" value="yes" /> Yes</label>
+        <label><input type="radio" name="q3" value="no" /> No</label>
+      </section>
+    `);
+    const fields = detectFields(document, eligible);
+    expect(fields.filter((field) => field.action === 'check-radio')).toHaveLength(3);
+    expect(fields.every((field) => (field.element as HTMLInputElement).value === 'yes')).toBe(true);
+  });
+
   it('flags recognized fields the profile cannot answer yet', () => {
     render(`<label for="inc">Household Income</label><input id="inc" />`);
     const [field] = detectFields(document, profile);
@@ -240,6 +271,7 @@ describe('applyFill', () => {
     render(`
       <fieldset>
         <legend>Gender</legend>
+        <label><input type="radio" name="gender" value="male" /> Male</label>
         <label><input type="radio" name="gender" value="female" /> Female</label>
       </fieldset>
     `);

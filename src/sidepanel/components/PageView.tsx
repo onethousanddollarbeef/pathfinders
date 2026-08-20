@@ -243,10 +243,17 @@ function CaptureReview({
       <h3>Captured from this page</h3>
       {captured.uncertainFields.length > 0 && (
         <div className="banner warn" style={{ marginBottom: 8 }}>
-          Could not confidently read: {captured.uncertainFields.join(', ')}. Check the values below before saving.
+          Could not confidently read: {captured.uncertainFields.join(', ')}.
+          {draft.amountUnknown
+            ? ' The page link will still be saved to Applications — add the award amount later if you know it.'
+            : ' Check the values below before saving.'}
         </div>
       )}
       <div className="stack">
+        <label className="field">
+          Page link
+          <input type="url" readOnly value={draft.url} />
+        </label>
         <label className="field">
           Name
           <input type="text" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
@@ -256,16 +263,30 @@ function CaptureReview({
             Award (min)
             <input
               type="number"
-              value={draft.amountMin}
-              onChange={(event) => setDraft({ ...draft, amountMin: Number(event.target.value) })}
+              placeholder={draft.amountUnknown ? 'Unknown' : undefined}
+              value={draft.amountUnknown ? '' : draft.amountMin || ''}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  amountUnknown: false,
+                  amountMin: Number(event.target.value),
+                })
+              }
             />
           </label>
           <label className="field">
             Award (max)
             <input
               type="number"
-              value={draft.amountMax}
-              onChange={(event) => setDraft({ ...draft, amountMax: Number(event.target.value) })}
+              placeholder={draft.amountUnknown ? 'Unknown' : undefined}
+              value={draft.amountUnknown ? '' : draft.amountMax || ''}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  amountUnknown: false,
+                  amountMax: Number(event.target.value),
+                })
+              }
             />
           </label>
         </div>
@@ -325,6 +346,9 @@ function CaptureReview({
         >
           Save and track
         </button>
+        {draft.amountUnknown && (
+          <span className="small muted">Saves this page link even without an award amount.</span>
+        )}
         <button type="button" className="btn tiny" onClick={onDone}>
           Discard
         </button>

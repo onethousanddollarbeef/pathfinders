@@ -9,7 +9,16 @@ import { evaluateEligibility } from './eligibility';
 import type { MatchResult, MatchVerdict, Scholarship, StudentProfile } from './types';
 
 export function averageAward(scholarship: Scholarship): number {
+  if (scholarship.amountUnknown) return 0;
   return Math.round((scholarship.amountMin + scholarship.amountMax) / 2);
+}
+
+/** Human-readable award string; shows TBD when the amount was not captured. */
+export function formatAward(scholarship: Scholarship): string {
+  if (scholarship.amountUnknown) return 'TBD';
+  const value = totalAwardValue(scholarship);
+  if (value <= 0 && scholarship.source === 'page-capture') return 'TBD';
+  return `$${Math.round(value).toLocaleString()}`;
 }
 
 /** Renewable awards are worth their yearly value times the renewal window. */

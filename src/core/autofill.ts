@@ -49,7 +49,8 @@ export type FieldKey =
   | 'interests'
   | 'recommenderName'
   | 'recommenderEmail'
-  | 'essay';
+  | 'essay'
+  | 'eligibilityYesNo';
 
 interface FieldPattern {
   key: FieldKey;
@@ -383,6 +384,257 @@ function isVisible(element: HTMLElement): boolean {
 }
 
 /** Radio/checkbox groups are handled as one logical field keyed by `name`. */
+function normalizeYesNo(text: string): 'yes' | 'no' | undefined {
+  const value = text.trim().toLowerCase();
+  if (['yes', 'y', 'true', '1'].includes(value)) return 'yes';
+  if (['no', 'n', 'false', '0'].includes(value)) return 'no';
+  return undefined;
+}
+
+function optionLabelFor(input: HTMLInputElement): string {
+  return (labelTextFor(input) || input.value || input.getAttribute('aria-label') || '').trim();
+}
+
+/** Pull the eligibility question text surrounding a Yes/No radio group. */
+export function questionTextForRadioGroup(input: HTMLInputElement): string {
+  const parts: string[] = [];
+  const fieldset = input.closest('fieldset');
+  const legend = fieldset?.querySelector('legend')?.textContent?.replace(/\s+/g, ' ').trim();
+  if (legend && legend.length > 3) parts.push(legend);
+
+  let container: Element | null = input.closest('div, li, tr, section, fieldset, form');
+  while (container) {
+    for (const child of container.children) {
+      if (child.contains(input)) break;
+      const tag = child.tagName;
+      if (!/^(P|H1|H2|H3|H4|H5|H6|LABEL|SPAN|DIV|LEGEND)$/i.test(tag)) continue;
+      const text = child.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (text.length < 12) continue;
+      if (/^(yes|no|eligibility)$/i.test(text)) continue;
+      if (/^yes\s*no$/i.test(text.replace(/\s+/g, ' '))) continue;
+      parts.push(text);
+    }
+
+    let sibling = container.previousElementSibling;
+    while (sibling) {
+      const text = sibling.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (text.length >= 12 && !/^(yes|no)$/i.test(text)) parts.unshift(text);
+      sibling = sibling.previousElementSibling;
+    }
+    container = container.parentElement;
+    if (parts.join(' ').length >= 40) break;
+  }
+
+  return [...new Set(parts)]
+    .join(' ')
+    .replace(/\bYes\b\s*\bNo\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 400);
+}
+
+interface YesNoInference {
+  patterns: RegExp[];
+  answer: (profile: StudentProfile) => boolean | undefined;
+}
+
+const YES_NO_INFERENCES: YesNoInference[] = [
+  {
+    patterns: [
+      /high school diploma.*2026[-/ ]?2027/i,
+      /earning your high school diploma/i,
+      /graduate from high school.*2027/i,
+    ],
+    answer: (profile) => {
+      const year = profile.academics.graduationYear;
+      if (year === 2027 && profile.academics.level?.startsWith('high-school')) return true;
+      if (year !== undefined && year !== 2027) return false;
+      return undefined;
+    },
+  },
+  {
+    patterns: [/gpa.*3\.3.*4\.0/i, /weighted cumulative gpa/i, /gpa.*3\.3/i],
+    answer: (profile) => (profile.academics.gpa !== undefined ? profile.academics.gpa >= 3.3 : undefined),
+  },
+  {
+    patterns: [/us citizen or permanent resident/i, /u\.?s\.? citizen or permanent resident/i, /citizen or permanent resident/i],
+    answer: (profile) => {
+      if (!profile.citizenship) return undefined;
+      return profile.citizenship === 'us-citizen' || profile.citizenship === 'us-permanent-resident';
+    },
+  },
+  {
+    patterns: [
+      /full[- ]time.*4[- ]year degree/i,
+      /enroll full[- ]time.*college or university/i,
+      /fall of 2027/i,
+      /accredited.*college or university/i,
+    ],
+    answer: (profile) => {
+      if (profile.academics.enrollment === 'part-time') return false;
+      if (profile.academics.enrollment === 'full-time') return true;
+      if (profile.academics.level?.startsWith('undergrad') || profile.academics.level?.startsWith('high-school')) {
+        return true;
+      }
+      return undefined;
+    },
+  },
+  {
+    patterns: [/first[\s_-]?gen(eration)?/i, /first in (your|the) family/i],
+    answer: (profile) => profile.demographics.firstGeneration,
+  },
+  {
+    patterns: [/\bpell\b/i, /pell grant/i],
+    answer: (profile) => profile.financials.pellEligible,
+  },
+  {
+    patterns: [/\bfafsa\b/i],
+    answer: (profile) => profile.financials.fafsaFiled,
+  },
+];
+
+/** Infer Yes/No from an eligibility question and the student profile. */
+export function inferYesNoAnswer(question: string, profile: StudentProfile): boolean | undefined {
+  const normalized = question.replace(/\s+/g, ' ').trim();
+  if (!normalized) return undefined;
+
+  for (const rule of YES_NO_INFERENCES) {
+    if (rule.patterns.some((pattern) => pattern.test(normalized))) {
+      return rule.answer(profile);
+    }
+  }
+
+  const guess = guessField({
+    autocomplete: '',
+    name: '',
+    id: '',
+    placeholder: '',
+    label: normalized,
+    context: normalized,
+  });
+  if (!guess) return undefined;
+
+  const values = buildFillValues(profile);
+  const raw = values[guess.key];
+  if (raw === 'Yes') return true;
+  if (raw === 'No') return false;
+
+  if (guess.key === 'citizenship' && /citizen|resident/i.test(normalized)) {
+    return profile.citizenship === 'us-citizen' || profile.citizenship === 'us-permanent-resident';
+  }
+  if (guess.key === 'gpa' && /gpa/i.test(normalized)) {
+    const match = normalized.match(/(\d+(?:\.\d+)?)/);
+    const threshold = match ? Number(match[1]) : undefined;
+    if (profile.academics.gpa !== undefined && threshold !== undefined) {
+      return profile.academics.gpa >= threshold;
+    }
+  }
+
+  return undefined;
+}
+
+function detectRadioGroups(
+  root: ParentNode,
+  profile: StudentProfile,
+  seenGroups: Set<string>,
+): DetectedField[] {
+  const radios = [...root.querySelectorAll<HTMLInputElement>('input[type="radio"]')].filter(isVisible);
+  const grouped = new Map<string, HTMLInputElement[]>();
+
+  for (const input of radios) {
+    if (input.disabled || isBlocked(collectSignals(input), input)) continue;
+    const name = input.name || input.id || optionLabelFor(input);
+    const groupKey = `radio:${name}`;
+    const bucket = grouped.get(groupKey) ?? [];
+    bucket.push(input);
+    grouped.set(groupKey, bucket);
+  }
+
+  const detected: DetectedField[] = [];
+
+  for (const [groupKey, inputs] of grouped) {
+    if (inputs.length < 2) continue;
+    if (seenGroups.has(groupKey)) continue;
+
+    const question = questionTextForRadioGroup(inputs[0]);
+    const yesNoAnswer = inferYesNoAnswer(question, profile);
+
+    if (yesNoAnswer !== undefined) {
+      const target = yesNoAnswer ? 'yes' : 'no';
+      const match = inputs.find((input) => normalizeYesNo(optionLabelFor(input)) === target);
+      if (!match) continue;
+
+      seenGroups.add(groupKey);
+      const guess = guessField({
+        autocomplete: '',
+        name: '',
+        id: '',
+        placeholder: '',
+        label: question,
+        context: question,
+      });
+
+      detected.push({
+        element: match,
+        key: guess?.key ?? 'eligibilityYesNo',
+        label: question.slice(0, 120) || optionLabelFor(match),
+        value: yesNoAnswer ? 'Yes' : 'No',
+        confidence: guess?.confidence ?? 0.75,
+        reason: guess?.reason ?? 'eligibility question',
+        action: 'check-radio',
+      });
+      continue;
+    }
+
+    const guess = guessField({
+      autocomplete: '',
+      name: '',
+      id: '',
+      placeholder: '',
+      label: question,
+      context: question,
+    });
+    if (!guess) continue;
+
+    const rawValue = valuesFromProfile(guess.key, profile, question);
+    if (!rawValue) continue;
+
+    const match = inputs.find((input) => {
+      const option = optionLabelFor(input).toLowerCase();
+      const target = rawValue.trim().toLowerCase();
+      return option === target || option.includes(target) || target.includes(option);
+    });
+    if (!match) continue;
+
+    seenGroups.add(groupKey);
+    detected.push({
+      element: match,
+      key: guess.key,
+      label: question.slice(0, 120) || optionLabelFor(match),
+      value: rawValue,
+      confidence: guess.confidence,
+      reason: guess.reason,
+      action: 'check-radio',
+    });
+  }
+
+  return detected;
+}
+
+function valuesFromProfile(key: FieldKey, profile: StudentProfile, question: string): string | undefined {
+  if (key === 'essay') {
+    return pickEssay(profile, {
+      autocomplete: '',
+      name: '',
+      id: '',
+      placeholder: '',
+      label: question,
+      context: question,
+    });
+  }
+  return buildFillValues(profile)[key];
+}
+
 function bestOptionForValue(select: HTMLSelectElement, value: string): HTMLOptionElement | undefined {
   const target = value.trim().toLowerCase();
   const options = [...select.options];
@@ -405,8 +657,11 @@ export function detectFields(
   const detected: DetectedField[] = [];
   const seenRadioGroups = new Set<string>();
 
+  detected.push(...detectRadioGroups(root, profile, seenRadioGroups));
+
   for (const element of elements) {
     if (!isVisible(element)) continue;
+    if (element instanceof HTMLInputElement && element.type === 'radio') continue;
     if (element instanceof HTMLInputElement && BLOCKED_INPUT_TYPES.has(element.type)) continue;
     if (element.disabled || (element as HTMLInputElement).readOnly) continue;
 
@@ -417,7 +672,7 @@ export function detectFields(
     if (!guess) continue;
 
     const label = signals.label || signals.placeholder || humanize(signals.name) || humanize(signals.id) || guess.key;
-    const isRadio = element instanceof HTMLInputElement && (element.type === 'radio' || element.type === 'checkbox');
+    const isChoice = element instanceof HTMLInputElement && element.type === 'checkbox';
     const rawValue = guess.key === 'essay' ? pickEssay(profile, signals) : values[guess.key];
 
     if (!rawValue) {
@@ -434,13 +689,16 @@ export function detectFields(
       continue;
     }
 
-    if (isRadio) {
+    if (isChoice) {
       const input = element as HTMLInputElement;
       const groupKey = `${guess.key}:${input.name}`;
       if (seenRadioGroups.has(groupKey)) continue;
-      const optionLabel = (labelTextFor(input) || input.value).trim().toLowerCase();
+      const optionLabel = optionLabelFor(input).toLowerCase();
       const target = rawValue.trim().toLowerCase();
-      const matches = optionLabel === target || optionLabel.includes(target) || target.includes(optionLabel);
+      const matches = normalizeYesNo(optionLabel) === normalizeYesNo(target)
+        || optionLabel === target
+        || optionLabel.includes(target)
+        || target.includes(optionLabel);
       if (!matches) continue;
       seenRadioGroups.add(groupKey);
       detected.push({
