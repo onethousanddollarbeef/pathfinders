@@ -11,7 +11,7 @@ import { matchAll } from '../core/matching';
 import { buildPlan } from '../core/planner';
 import { createTrackedApplication, setStatus, toggleTask } from '../core/tracker';
 import { loadState, saveState, subscribeToState } from '../core/storage';
-import { getSession, pullState, pushState, resendConfirmationEmail, signIn, signOut, signUp, ensureRemoteProfile } from '../core/supabase';
+import { getSession, pullState, pushState, requestPasswordReset, resendConfirmationEmail, signIn, signOut, signUp } from '../core/supabase';
 import type { SupabaseSession } from '../core/supabase';
 import type { AppState, Settings } from '../core/storage';
 import type {
@@ -45,6 +45,7 @@ export interface AppStore {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<{ message: string; signedIn: boolean }>;
   resendConfirmation: (email: string) => Promise<string>;
+  requestPasswordReset: (email: string) => Promise<string>;
   signOut: () => Promise<void>;
 }
 
@@ -174,15 +175,19 @@ export function useAppState(): AppStore {
       const result = await signUp(email, password);
       if (result.session) {
         const local = state ?? await loadState();
-        await ensureRemoteProfile(result.session, local);
-        await pushState(result.session, local);
+        const merged = await pullState(result.session, local);
+        await saveState(merged);
+        await pushState(result.session, merged);
         setSession(result.session);
+        setState(merged);
         setSyncStatus('synced');
       }
       return { message: result.message, signedIn: result.signedIn };
     },
 
     resendConfirmation: async (email) => resendConfirmationEmail(email),
+
+    requestPasswordReset: async (email) => requestPasswordReset(email),
 
     signOut: async () => {
       await signOut(session);

@@ -1,3 +1,4 @@
+import { createEmptyProfile } from './profile';
 import type { AppState } from './storage';
 import type { SupabaseSession } from './supabase';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './supabase';
@@ -8,6 +9,8 @@ import type { ApplicationStatus, StudentProfile } from './types';
 interface RemoteProfile {
   id: string;
   email?: string;
+  first_name?: string;
+  last_name?: string;
   gpa?: number;
   major?: string;
   grade_level?: string;
@@ -16,7 +19,7 @@ interface RemoteProfile {
   phone?: string;
   school?: string;
   graduation_year?: number;
-  demographics?: Record<string, unknown>;
+  demographics?: unknown;
   fafsa_completed?: boolean;
   updated_at?: string;
 }
@@ -49,6 +52,61 @@ const LEVEL_TO_GRADE: Record<string, string> = {
   'undergrad-senior': 'Senior',
 };
 
+function hasValue<T>(value: T | undefined | null): value is T {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+}
+
+function pickFirst<T>(...values: (T | undefined | null)[]): T | undefined {
+  for (const value of values) {
+    if (hasValue(value)) return value;
+  }
+  return undefined;
+}
+
+/** True when the extension has no meaningful profile data yet (fresh install). */
+export function isLocalProfileEmpty(profile: StudentProfile): boolean {
+  return (
+    !profile.firstName &&
+    !profile.lastName &&
+    !profile.email &&
+    profile.academics.gpa === undefined &&
+    !profile.academics.level &&
+    (profile.academics.intendedMajors?.length ?? 0) === 0 &&
+    !profile.academics.currentSchool &&
+    profile.academics.graduationYear === undefined &&
+    !profile.state &&
+    !profile.phone &&
+    profile.financials.householdIncome === undefined &&
+    profile.financials.fafsaFiled === undefined &&
+    profile.demographics.firstGeneration === undefined &&
+    (profile.demographics.ethnicities?.length ?? 0) === 0 &&
+    profile.activities.length === 0
+  );
+}
+
+function parseDemographicsBlob(raw: unknown): {
+  demographics: Record<string, unknown>;
+  extension: Record<string, unknown>;
+} {
+  if (!raw) return { demographics: {}, extension: {} };
+  if (Array.isArray(raw)) {
+    return { demographics: { ethnicities: raw }, extension: {} };
+  }
+  if (typeof raw !== 'object') return { demographics: {}, extension: {} };
+
+  const obj = raw as Record<string, unknown>;
+  const nestedExtension = obj.extension;
+  const extension =
+    nestedExtension && typeof nestedExtension === 'object' && !Array.isArray(nestedExtension)
+      ? (nestedExtension as Record<string, unknown>)
+      : {};
+
+  return { demographics: obj, extension };
+}
+
 function extensionPayload(profile: StudentProfile): Record<string, unknown> {
   return {
     academics: profile.academics,
@@ -60,11 +118,14 @@ function extensionPayload(profile: StudentProfile): Record<string, unknown> {
     weeklyHoursAvailable: profile.weeklyHoursAvailable,
     citizenship: profile.citizenship,
     addressLine1: profile.addressLine1,
+    addressLine2: profile.addressLine2,
     city: profile.city,
     postalCode: profile.postalCode,
     country: profile.country,
     preferredName: profile.preferredName,
     dateOfBirth: profile.dateOfBirth,
+    careerGoals: profile.careerGoals,
+    fundingGoal: profile.fundingGoal,
   };
 }
 
@@ -73,6 +134,8 @@ function profileToRemote(profile: StudentProfile, session: SupabaseSession): Rem
   return {
     id: session.user.id,
     email: profile.email ?? session.user.email,
+    first_name: profile.firstName,
+    last_name: profile.lastName,
     gpa: profile.academics.gpa,
     major: profile.academics.intendedMajors?.[0],
     grade_level: profile.academics.level ? LEVEL_TO_GRADE[profile.academics.level] : undefined,
@@ -86,64 +149,92 @@ function profileToRemote(profile: StudentProfile, session: SupabaseSession): Rem
       firstGeneration: profile.demographics.firstGeneration,
       ethnicities: profile.demographics.ethnicities,
       gender: profile.demographics.gender,
+      militaryAffiliation: profile.demographics.militaryAffiliation,
+      disability: profile.demographics.disability,
+      lgbtq: profile.demographics.lgbtq,
       extension: extensionPayload(profile),
     },
   };
 }
 
-function remoteToProfile(remote: RemoteProfile, local: StudentProfile): StudentProfile {
-  const demographics = (remote.demographics ?? {}) as Record<string, unknown>;
-  const extension = (demographics.extension ?? {}) as Record<string, unknown>;
+/** Merge a Supabase profile row into the extension profile, preferring remote website data. */
+export function remoteToProfile(remote: RemoteProfile, local: StudentProfile): StudentProfile {
+  const base = isLocalProfileEmpty(local) ? createEmptyProfile() : local;
+  const { demographics, extension } = parseDemographicsBlob(remote.demographics);
   const academics = (extension.academics ?? {}) as StudentProfile['academics'];
   const financials = (extension.financials ?? {}) as StudentProfile['financials'];
   const fullName = remote.full_name ?? '';
-  const [firstName, ...rest] = fullName.split(' ');
+  const [fullFirst, ...fullRest] = fullName.split(' ').filter(Boolean);
+
+  const firstName = pickFirst(remote.first_name, fullFirst, extension.firstName as string | undefined, base.firstName);
+  const lastName = pickFirst(remote.last_name, fullRest.join(' ') || undefined, extension.lastName as string | undefined, base.lastName);
 
   return {
-    ...local,
+    ...base,
     updatedAt: Date.now(),
-    email: remote.email ?? local.email,
-    firstName: firstName || local.firstName,
-    lastName: rest.join(' ') || local.lastName,
-    phone: remote.phone ?? local.phone,
-    state: remote.state ?? local.state,
-    citizenship: (extension.citizenship as StudentProfile['citizenship']) ?? local.citizenship,
-    addressLine1: (extension.addressLine1 as string | undefined) ?? local.addressLine1,
-    city: (extension.city as string | undefined) ?? local.city,
-    postalCode: (extension.postalCode as string | undefined) ?? local.postalCode,
-    country: (extension.country as string | undefined) ?? local.country,
-    preferredName: (extension.preferredName as string | undefined) ?? local.preferredName,
-    dateOfBirth: (extension.dateOfBirth as string | undefined) ?? local.dateOfBirth,
+    email: pickFirst(remote.email, base.email),
+    firstName,
+    lastName,
+    phone: pickFirst(remote.phone, base.phone),
+    state: pickFirst(remote.state, base.state),
+    citizenship: pickFirst(extension.citizenship as StudentProfile['citizenship'], base.citizenship),
+    addressLine1: pickFirst(extension.addressLine1 as string | undefined, base.addressLine1),
+    addressLine2: pickFirst(extension.addressLine2 as string | undefined, base.addressLine2),
+    city: pickFirst(extension.city as string | undefined, base.city),
+    postalCode: pickFirst(extension.postalCode as string | undefined, base.postalCode),
+    country: pickFirst(extension.country as string | undefined, base.country),
+    preferredName: pickFirst(extension.preferredName as string | undefined, base.preferredName),
+    dateOfBirth: pickFirst(extension.dateOfBirth as string | undefined, base.dateOfBirth),
+    careerGoals: pickFirst(extension.careerGoals as string | undefined, base.careerGoals),
+    fundingGoal: pickFirst(extension.fundingGoal as number | undefined, base.fundingGoal),
     demographics: {
-      ...local.demographics,
-      firstGeneration: (demographics.firstGeneration as boolean | undefined) ?? local.demographics.firstGeneration,
-      ethnicities: (demographics.ethnicities as string[] | undefined) ?? local.demographics.ethnicities,
-      gender: (demographics.gender as string | undefined) ?? local.demographics.gender,
+      ...base.demographics,
+      firstGeneration: pickFirst(
+        demographics.firstGeneration as boolean | undefined,
+        base.demographics.firstGeneration,
+      ),
+      ethnicities: pickFirst(
+        demographics.ethnicities as string[] | undefined,
+        base.demographics.ethnicities,
+      ),
+      gender: pickFirst(demographics.gender as string | undefined, base.demographics.gender),
+      militaryAffiliation: pickFirst(
+        demographics.militaryAffiliation as string[] | undefined,
+        base.demographics.militaryAffiliation,
+      ),
+      disability: pickFirst(demographics.disability as boolean | undefined, base.demographics.disability),
+      lgbtq: pickFirst(demographics.lgbtq as boolean | undefined, base.demographics.lgbtq),
     },
     academics: {
-      ...local.academics,
+      ...base.academics,
       ...academics,
-      gpa: remote.gpa ?? academics.gpa ?? local.academics.gpa,
-      intendedMajors: remote.major
-        ? [remote.major, ...(academics.intendedMajors ?? local.academics.intendedMajors ?? [])].filter(Boolean)
-        : academics.intendedMajors ?? local.academics.intendedMajors,
-      currentSchool: remote.school ?? academics.currentSchool ?? local.academics.currentSchool,
-      graduationYear: remote.graduation_year ?? academics.graduationYear ?? local.academics.graduationYear,
-      level: remote.grade_level
-        ? GRADE_TO_LEVEL[remote.grade_level] ?? academics.level ?? local.academics.level
-        : academics.level ?? local.academics.level,
+      gpa: pickFirst(remote.gpa, academics.gpa, base.academics.gpa),
+      intendedMajors: pickFirst(
+        remote.major ? [remote.major] : undefined,
+        academics.intendedMajors,
+        base.academics.intendedMajors,
+      ),
+      currentSchool: pickFirst(remote.school, academics.currentSchool, base.academics.currentSchool),
+      graduationYear: pickFirst(remote.graduation_year, academics.graduationYear, base.academics.graduationYear),
+      level: pickFirst(
+        remote.grade_level ? GRADE_TO_LEVEL[remote.grade_level] : undefined,
+        academics.level,
+        base.academics.level,
+      ),
     },
     financials: {
-      ...local.financials,
+      ...base.financials,
       ...financials,
-      fafsaFiled: remote.fafsa_completed ?? financials.fafsaFiled ?? local.financials.fafsaFiled,
+      fafsaFiled: pickFirst(remote.fafsa_completed, financials.fafsaFiled, base.financials.fafsaFiled),
     },
-    interests: (extension.interests as string[] | undefined) ?? local.interests,
-    activities: (extension.activities as StudentProfile['activities'] | undefined) ?? local.activities,
-    essays: (extension.essays as StudentProfile['essays'] | undefined) ?? local.essays,
-    recommenders: (extension.recommenders as StudentProfile['recommenders'] | undefined) ?? local.recommenders,
-    weeklyHoursAvailable:
-      (extension.weeklyHoursAvailable as number | undefined) ?? local.weeklyHoursAvailable,
+    interests: pickFirst(extension.interests as string[] | undefined, base.interests) ?? [],
+    activities: pickFirst(extension.activities as StudentProfile['activities'] | undefined, base.activities) ?? [],
+    essays: pickFirst(extension.essays as StudentProfile['essays'] | undefined, base.essays) ?? [],
+    recommenders: pickFirst(extension.recommenders as StudentProfile['recommenders'] | undefined, base.recommenders) ?? [],
+    weeklyHoursAvailable: pickFirst(
+      extension.weeklyHoursAvailable as number | undefined,
+      base.weeklyHoursAvailable,
+    ) ?? 5,
   };
 }
 
@@ -174,21 +265,36 @@ async function request<T>(path: string, init: RequestInit = {}, accessToken?: st
   if (!response.ok) {
     let message = body || `Supabase request failed (${response.status})`;
     try {
-      const parsed = JSON.parse(body) as { msg?: string; message?: string };
+      const parsed = JSON.parse(body) as { msg?: string; message?: string; hint?: string };
       message = parsed.msg ?? parsed.message ?? message;
+      if (parsed.hint && !message.includes(parsed.hint)) message = `${message} ${parsed.hint}`;
     } catch { /* plain-text error */ }
+    if (message.includes('Supabase') || message.includes('request failed')) {
+      message = 'Could not sync with your account. Try again in a moment.';
+    }
     throw new Error(message);
   }
   return (body ? JSON.parse(body) : undefined) as T;
 }
 
-export async function ensureRemoteProfile(session: SupabaseSession, local: AppState): Promise<void> {
-  const remote = profileToRemote(local.profile, session);
-  await request('/rest/v1/profiles?on_conflict=id', {
+/** PostgREST requires a JSON array for insert/upsert payloads. */
+async function upsertRows<T extends object>(
+  table: string,
+  onConflict: string,
+  rows: T[],
+  accessToken: string,
+): Promise<void> {
+  if (rows.length === 0) return;
+  await request(`/rest/v1/${table}?on_conflict=${onConflict}`, {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(remote),
-  }, session.access_token);
+    body: JSON.stringify(rows),
+  }, accessToken);
+}
+
+export async function ensureRemoteProfile(session: SupabaseSession, local: AppState): Promise<void> {
+  const remote = profileToRemote(local.profile, session);
+  await upsertRows('profiles', 'id', [remote], session.access_token);
 }
 
 export async function pullState(session: SupabaseSession, local: AppState): Promise<AppState> {
@@ -199,8 +305,12 @@ export async function pullState(session: SupabaseSession, local: AppState): Prom
   );
 
   let profile = local.profile;
-  if (profiles[0]) {
-    profile = remoteToProfile(profiles[0], local.profile);
+  const remoteProfile = profiles[0];
+  if (remoteProfile) {
+    profile = remoteToProfile(remoteProfile, local.profile);
+    if (!profile.email) profile = { ...profile, email: session.user.email };
+  } else if (!profile.email && session.user.email) {
+    profile = { ...profile, email: session.user.email };
   }
 
   const tracked = await request<RemoteUserScholarship[]>(
@@ -214,11 +324,14 @@ export async function pullState(session: SupabaseSession, local: AppState): Prom
   }
 
   const scholarshipIds = [...new Set(tracked.map((entry) => entry.scholarship_id))];
-  const scholarshipRows = await request<SupabaseScholarshipRow[]>(
-    `/rest/v1/scholarships?id=in.(${scholarshipIds.map((id) => encodeURIComponent(id)).join(',')})&select=*`,
-    { method: 'GET' },
-    session.access_token,
-  );
+  const scholarshipRows = scholarshipIds.length > 0
+    ? await request<SupabaseScholarshipRow[]>(
+      `/rest/v1/scholarships?id=in.(${scholarshipIds.map((id) => encodeURIComponent(id)).join(',')})&select=*`,
+      { method: 'GET' },
+      session.access_token,
+    )
+    : [];
+
   const scholarships = scholarshipRows.map(mapSupabaseScholarship);
   const scholarshipMap = new Map(scholarships.map((entry) => [entry.id, entry]));
 
@@ -229,7 +342,7 @@ export async function pullState(session: SupabaseSession, local: AppState): Prom
     }
   }
 
-  const applications = tracked
+  const remoteApplications = tracked
     .filter((entry) => scholarshipMap.has(entry.scholarship_id))
     .map((entry) => {
       const scholarship = scholarshipMap.get(entry.scholarship_id)!;
@@ -242,15 +355,17 @@ export async function pullState(session: SupabaseSession, local: AppState): Prom
       };
     });
 
-  const localOnlyApplications = local.applications.filter(
-    (application) => !tracked.some((entry) => entry.scholarship_id === application.scholarshipId),
-  );
+  const localOnlyApplications = isLocalProfileEmpty(local.profile) && local.applications.length === 0
+    ? []
+    : local.applications.filter(
+      (application) => !tracked.some((entry) => entry.scholarship_id === application.scholarshipId),
+    );
 
   return {
     ...local,
     profile,
     customScholarships,
-    applications: [...applications, ...localOnlyApplications],
+    applications: [...remoteApplications, ...localOnlyApplications],
   };
 }
 
@@ -261,16 +376,15 @@ export async function pushState(session: SupabaseSession, state: AppState): Prom
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(application.scholarshipId),
   );
 
-  for (const application of uuidApplications) {
-    await request('/rest/v1/user_scholarships?on_conflict=user_id,scholarship_id', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        user_id: session.user.id,
-        scholarship_id: application.scholarshipId,
-        status: mapExtensionStatus(application.status),
-        notes: application.notes,
-      }),
-    }, session.access_token);
-  }
+  await upsertRows(
+    'user_scholarships',
+    'user_id,scholarship_id',
+    uuidApplications.map((application) => ({
+      user_id: session.user.id,
+      scholarship_id: application.scholarshipId,
+      status: mapExtensionStatus(application.status),
+      notes: application.notes,
+    })),
+    session.access_token,
+  );
 }

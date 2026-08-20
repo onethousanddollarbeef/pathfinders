@@ -5,7 +5,7 @@ import { PageView } from './PageView';
 
 const NEXUS_WEB_URL = 'https://nexusnext.lovable.app';
 
-type AuthMode = 'sign-in' | 'create';
+type AuthMode = 'sign-in' | 'create' | 'reset-password';
 
 function syncLabel(status: AppStore['syncStatus'], error?: string): string {
   if (status === 'syncing') return 'Updating…';
@@ -69,7 +69,21 @@ export function AccountView({ store }: { store: AppStore }) {
     setMode(next);
     setMessage(undefined);
     setSignupBlocked(false);
-    setPassword('');
+    if (next !== 'sign-in') setPassword('');
+  };
+
+  const sendPasswordReset = async () => {
+    const targetEmail = email.trim();
+    if (!targetEmail) return;
+    setBusy(true);
+    setMessage(undefined);
+    try {
+      setMessage(await store.requestPasswordReset(targetEmail));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const showVerifyPrompt = store.session && !isEmailVerified(store.session);
@@ -106,6 +120,45 @@ export function AccountView({ store }: { store: AppStore }) {
                 Open website
               </a>
               <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
+            </div>
+          </>
+        ) : mode === 'reset-password' ? (
+          <>
+            <h2 className="auth-title">Reset your password</h2>
+            <p className="auth-subtitle small muted">
+              Enter your email and we will send a link to choose a new password. The link opens in your browser — same
+              flow as the website.
+            </p>
+
+            <div className="stack" style={{ marginTop: 12 }}>
+              <label className="field">
+                Email
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="btn primary auth-submit"
+                disabled={busy || !email.trim()}
+                onClick={() => void sendPasswordReset()}
+              >
+                Send reset link
+              </button>
+
+              {message && (
+                <div className={`banner${message.includes('sent to') ? ' success' : ''}`}>
+                  {message}
+                </div>
+              )}
+
+              <button type="button" className="btn subtle auth-switch" onClick={() => switchMode('sign-in')}>
+                Back to sign in
+              </button>
             </div>
           </>
         ) : (
@@ -152,6 +205,12 @@ export function AccountView({ store }: { store: AppStore }) {
                   </button>
                 </div>
               </label>
+
+              {mode === 'sign-in' && (
+                <button type="button" className="btn subtle auth-forgot" onClick={() => switchMode('reset-password')}>
+                  Forgot password?
+                </button>
+              )}
 
               <button
                 type="button"

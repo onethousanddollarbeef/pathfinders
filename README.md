@@ -40,6 +40,8 @@ Both the website and extension use the **same Supabase project and the same emai
 
 With **Confirm email** turned off (autoconfirm enabled), sign-up works instantly in both places — no confirmation step required before you can sign in.
 
+**Forgot password:** On the extension **Account** tab, tap **Forgot password?** to receive a reset link by email. The link opens on nexusnext.lovable.app where you choose a new password, then sign in here with the updated credentials.
+
 ### Supabase settings via Lovable
 
 If you manage the project through Lovable:
