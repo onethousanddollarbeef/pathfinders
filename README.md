@@ -1,9 +1,9 @@
 # ScholarPath — Scholarship Strategy Extension
 
 A Chrome extension (Manifest V3) that treats scholarship hunting as a strategy problem rather than a search problem.
-Students build one profile, save applications they find on the web, track their progress, and autofill the forms they
-land on. The extension does not present a preselected scholarship marketplace.
-
+Students build one profile, get matches with the reasoning shown, compare awards on the axes that actually decide
+where to spend time, follow a prioritized plan, track every application, and autofill the forms they land on.
+  
 The extension works offline with a local cache. Users can also create an account or sign in to synchronize that cache
 through Supabase, allowing the companion website to use the same profile and application data.
 
@@ -31,9 +31,12 @@ Supabase secret/service-role key in the extension.
 | Capability | Where | How it works |
 | --- | --- | --- |
 | Create a student profile | **Profile** tab | Academics, financials, background, activities, essay library, recommenders, and weekly capacity. A completeness meter ranks what to answer next by the award dollars each blank field is gating. |
-| Save applications found online | **Account** tab | Current-page tools capture the application name, award, deadline, and requirements, then save it to the student's personal history. |
-| Track and complete applications | **Applications** tab | Saved applications include a generated checklist, notes, deadlines, and a **Mark complete** action. |
-| Fill out forms on sites you visit | **Account** tab, overlay, right-click menu, `Alt+Shift+F` | Current-page tools read autocomplete attributes, field names, labels, placeholders and surrounding text, preview exactly what would be written, then fill. |
+| Find relevant scholarships | **Discover** tab | Every scholarship carries declarative eligibility rules; the engine evaluates them against the profile and filters by category, award floor, effort ceiling and deadline window. |
+| Understand why you qualify | "Why this match?" on every card | Each requirement is listed as met, failed, or unanswered with a sentence naming both the requirement and your value — for example, "Your 3.6 GPA meets the minimum of 3.0." |
+| Compare by award, deadline, eligibility and effort | **Compare** tab | Up to four awards side by side across award value, days remaining, fit score, estimated hours, odds, expected value and value per hour, with the winner of each row highlighted. |
+| Get a prioritized plan | **Plan** tab | Ranked by expected dollars per hour, adjusted for deadline urgency, momentum on started applications, and whether the work physically fits before the deadline at your stated weekly hours. |
+| Track saved / started / submitted | **Tracker** tab | Status pipeline with a generated task checklist, back-dated due dates, notes, hours invested and remaining, plus overdue and due-soon alerts. |
+| Fill out forms on sites you visit | **This page** tab, overlay, right-click menu, `Alt+Shift+F` | The matcher reads autocomplete attributes, field names, labels, placeholders and surrounding text, previews exactly what it would write where, then fills. |
 
 ## Why value-per-hour instead of award size
 
@@ -72,8 +75,9 @@ node scripts/generate-icons.mjs  # regenerate the PNG icons
 
 ### Browser smoke test
 
-`scripts/smoke-test.mjs` loads the built extension into a real browser and runs end-to-end checks: the service worker
-starts, the side panel renders without a seeded scholarship catalog, page capture works, and the content script fills
+`scripts/smoke-test.mjs` loads the built extension into a real browser and runs 45 end-to-end checks: the service
+worker starts, the side panel renders every tab with computed numbers, matches carry explanations, the comparison
+table highlights winners, the plan ranks and explains its ordering, and the content script fills
 `demo/application-form.html` — including asserting that the password and SSN fields stay empty.
 
 ```bash
@@ -104,7 +108,7 @@ src/
     storage.ts      chrome.storage.local cache with migration + memory fallback
     supabase.ts     authentication and per-user cloud state synchronization
   data/           Seed scholarship catalog with declarative rules
-  sidepanel/      React UI (Home, Profile, Discover guidance, Applications, Account + current-page tools)
+  sidepanel/      React UI (Home, Profile, Discover, Compare, Plan, Tracker, This page)
   content/        Content script + shadow-DOM overlay
   background/     Service worker: side panel, context menus, deadline notifications
 demo/           Application-form fixture used by the browser smoke test
@@ -124,11 +128,14 @@ matching, planning and autofill logic testable in plain Node.
 - Values are written through the native setter with `input`/`change` events so React-controlled forms accept them
   rather than silently reverting.
 
-## About the test catalog
+## About the seeded catalog
 
-`src/data/scholarships.ts` contains illustrative fixtures used by the matching and planning unit tests. They are not
-loaded into the extension UI. Real applications are added only when a student uses **Save application** under the
-**Account** tab; the captured record is then kept in the student's Applications history.
+`src/data/scholarships.ts` contains 26 **illustrative** scholarships with plausible award sizes, deadlines,
+requirements and applicant pools. They are examples that exercise the engine across categories (merit, need, identity,
+field of study, local, service, military, employer), not scraped listings, and they should not be treated as live
+program data. Real programs get in via **Capture scholarship** on the "This page" tab, which reads award amounts,
+deadlines, GPA minimums and requirements out of the page you are viewing and hands you an editable draft with the
+supporting text snippets attached.
 
 ## Privacy
 

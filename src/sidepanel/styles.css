@@ -35,14 +35,6 @@ body {
   line-height: 1.5;
 }
 
-h1 {
-  font-family: Georgia, serif;
-}
-
-p {
-  font-family: 'Poppins', sans-serif;
-}
-
 .app {
   display: flex;
   flex-direction: column;
@@ -128,40 +120,6 @@ p {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.embedded-view {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.combined-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
-}
-
-.combined-section > div > h2 {
-  margin: 0;
-  font-size: 14px;
-}
-
-.combined-section > div > p {
-  margin: 2px 0 0;
-}
-
-.continue-footer {
-  flex: none;
-  padding: 8px 12px 12px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-}
-
-.continue-button {
-  width: 100%;
 }
 
 .card {

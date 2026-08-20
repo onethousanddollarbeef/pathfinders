@@ -23,7 +23,7 @@ async function sendToActiveTab(message: PanelToContentMessage): Promise<ContentR
  * "This page" tab: scans the open tab, previews exactly what would be written
  * where, fills it, and can capture the listing into the catalog.
  */
-export function PageView({ store, embedded = false }: { store: AppStore; embedded?: boolean }) {
+export function PageView({ store }: { store: AppStore }) {
   const [scan, setScan] = useState<FormScan | undefined>();
   const [pageTitle, setPageTitle] = useState('');
   const [pageUrl, setPageUrl] = useState('');
@@ -85,7 +85,7 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
   };
 
   return (
-    <div className={embedded ? 'embedded-view' : 'view'}>
+    <div className="view">
       <div className="card">
         <div className="spread">
           <h2 style={{ margin: 0 }}>This page</h2>
@@ -124,7 +124,7 @@ export function PageView({ store, embedded = false }: { store: AppStore; embedde
                 Fill {scan.fillableFields} field{scan.fillableFields === 1 ? '' : 's'}
               </button>
               <button type="button" className="btn tiny" onClick={() => void capture()} disabled={busy}>
-                Save application
+                Capture scholarship
               </button>
             </div>
           </>
@@ -240,7 +240,7 @@ function CaptureReview({
 
   return (
     <div className="card">
-      <h3>Save this application</h3>
+      <h3>Captured from this page</h3>
       {captured.uncertainFields.length > 0 && (
         <div className="banner warn" style={{ marginBottom: 8 }}>
           Could not confidently read: {captured.uncertainFields.join(', ')}. Check the values below before saving.
@@ -323,7 +323,7 @@ function CaptureReview({
             onDone();
           }}
         >
-          Save to applications
+          Save and track
         </button>
         <button type="button" className="btn tiny" onClick={onDone}>
           Discard

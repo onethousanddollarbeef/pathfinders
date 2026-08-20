@@ -17,11 +17,11 @@ const STYLES = `
     right: 16px;
     bottom: 16px;
     width: 320px;
-    background: #ffffff;
-    color: #111827;
-    border: 1px solid #e5e7eb;
+    background: #fffaf5;
+    color: #302017;
+    border: 1px solid #e8ddd2;
     border-radius: 12px;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 12px 32px rgba(48, 32, 23, 0.18);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
     line-height: 1.45;
@@ -33,16 +33,16 @@ const STYLES = `
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    color: #ffffff;
+    background: #faf6f1;
+    color: #d86b35;
     font-weight: 600;
   }
-  .header .dot { width: 8px; height: 8px; border-radius: 50%; background: #a5f3fc; }
+  .header .dot { width: 8px; height: 8px; border-radius: 50%; background: #d86b35; }
   .header .spacer { flex: 1; }
   .header button {
     background: transparent;
     border: none;
-    color: #e0e7ff;
+    color: #7b6254;
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
@@ -50,11 +50,11 @@ const STYLES = `
   }
   .body { padding: 12px; }
   .body p { margin: 0 0 8px; }
-  .muted { color: #6b7280; font-size: 12px; }
+  .muted { color: #7b6254; font-size: 12px; }
   .actions { display: flex; gap: 8px; margin-top: 10px; }
   button.primary {
     flex: 1;
-    background: #4f46e5;
+    background: #d86b35;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -62,10 +62,10 @@ const STYLES = `
     font-weight: 600;
     cursor: pointer;
   }
-  button.primary:hover { background: #4338ca; }
+  button.primary:hover { background: #bd5527; }
   button.ghost {
-    background: #f3f4f6;
-    color: #374151;
+    background: #f8e8d9;
+    color: #302017;
     border: none;
     border-radius: 8px;
     padding: 8px 10px;
@@ -75,14 +75,14 @@ const STYLES = `
   li { margin-bottom: 3px; }
   .pill {
     display: inline-block;
-    background: #eef2ff;
-    color: #3730a3;
+    background: #f8e8d9;
+    color: #a64820;
     border-radius: 999px;
     padding: 1px 8px;
     font-size: 11px;
     margin-right: 4px;
   }
-  .warn { color: #92400e; }
+  .warn { color: #a45b22; }
 `;
 
 const HIGHLIGHT_CLASS = 'scholarpath-filled-highlight';
@@ -93,9 +93,9 @@ function ensureHighlightStyles(): void {
   style.id = 'scholarpath-highlight-styles';
   style.textContent = `
     .${HIGHLIGHT_CLASS} {
-      outline: 2px solid #6366f1 !important;
+      outline: 2px solid #d86b35 !important;
       outline-offset: 1px !important;
-      background-color: rgba(99, 102, 241, 0.06) !important;
+      background-color: rgba(216, 107, 53, 0.08) !important;
       transition: outline-color 1.2s ease-out;
     }
   `;
@@ -134,7 +134,7 @@ export class Overlay {
       <div class="card">
         <div class="header">
           <span class="dot"></span>
-          <span>ScholarPath</span>
+          <span>Nexus</span>
           <span class="spacer"></span>
           <button data-action="close" aria-label="Close">×</button>
         </div>

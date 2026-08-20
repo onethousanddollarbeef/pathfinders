@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ScholarPath — Scholarship Strategy",
+  "name": "Nexus — Scholarship Strategy",
   "version": "0.1.0",
-  "description": "Build a student profile, find scholarships you actually qualify for, compare them by value per hour, get a prioritized plan, and autofill applications.",
+  "description": "Save scholarship applications from the web, track their progress, and autofill forms with your student profile.",
   "minimum_chrome_version": "114",
   "permissions": [
     "storage",
@@ -25,7 +25,7 @@
     "default_path": "sidepanel/index.html"
   },
   "action": {
-    "default_title": "Open ScholarPath",
+    "default_title": "Open Nexus",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
@@ -50,11 +50,11 @@
   "commands": {
     "autofill-page": {
       "suggested_key": { "default": "Alt+Shift+F" },
-      "description": "Fill the current form with your ScholarPath profile"
+      "description": "Fill the current form with your Nexus profile"
     },
     "open-panel": {
       "suggested_key": { "default": "Alt+Shift+S" },
-      "description": "Open the ScholarPath side panel"
+      "description": "Open the Nexus side panel"
     }
   }
 }
