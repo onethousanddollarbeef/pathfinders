@@ -24,8 +24,7 @@ export function App() {
   const [captureReview, setCaptureReview] = useState<CapturedScholarship | undefined>();
 
   const applyCapture = (captured: CapturedScholarship) => {
-    store.addCustomScholarship(captured.draft);
-    store.saveScholarship(captured.draft.id);
+    store.captureAndTrack(captured.draft);
     setCaptureReview(captured);
     setTab('tracker');
   };

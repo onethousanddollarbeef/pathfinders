@@ -127,7 +127,7 @@ export function CaptureReview({
           type="button"
           className="btn primary tiny"
           onClick={() => {
-            store.addCustomScholarship(draft);
+            store.captureAndTrack(draft);
             onDone();
           }}
         >

@@ -36,8 +36,7 @@ export function ExploreView({ store }: { store: AppStore }) {
   }, [catalog, store.state]);
 
   const save = (match: MatchResult) => {
-    store.addCustomScholarship(match.scholarship);
-    store.saveScholarship(match.scholarship.id);
+    store.captureAndTrack(match.scholarship);
   };
 
   const updatedLabel = lastUpdated
