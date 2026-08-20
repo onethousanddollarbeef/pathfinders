@@ -43,7 +43,7 @@ export interface AppStore {
   syncStatus: 'local' | 'syncing' | 'synced' | 'error';
   syncError: string | undefined;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<string>;
+  signUp: (email: string, password: string) => Promise<{ message: string; signedIn: boolean }>;
   resendConfirmation: (email: string) => Promise<string>;
   signOut: () => Promise<void>;
 }
@@ -76,7 +76,7 @@ export function useAppState(): AppStore {
         if (active) {
           setState(loaded);
           setSyncStatus('error');
-          setSyncError(error instanceof Error ? error.message : String(error));
+          setSyncError('Could not load your account. You can keep working locally.');
         }
       }
     });
@@ -99,7 +99,10 @@ export function useAppState(): AppStore {
           setSyncError(undefined);
         }).catch((error: unknown) => {
           setSyncStatus('error');
-          setSyncError(error instanceof Error ? error.message : String(error));
+          const raw = error instanceof Error ? error.message : String(error);
+          setSyncError(raw.includes('Supabase') || raw.includes('request failed')
+            ? 'Could not reach your account. Try again in a moment.'
+            : raw);
         });
       }
       return next;
@@ -176,7 +179,7 @@ export function useAppState(): AppStore {
         setSession(result.session);
         setSyncStatus('synced');
       }
-      return result.message;
+      return { message: result.message, signedIn: result.signedIn };
     },
 
     resendConfirmation: async (email) => resendConfirmationEmail(email),

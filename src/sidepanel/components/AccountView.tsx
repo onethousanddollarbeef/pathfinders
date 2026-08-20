@@ -1,8 +1,19 @@
 import { useState } from 'react';
+import { isEmailVerified } from '../../core/supabase';
 import type { AppStore } from '../useAppState';
 import { PageView } from './PageView';
 
+const NEXUS_WEB_URL = 'https://nexusnext.lovable.app';
+const NEXUS_AUTH_URL = `${NEXUS_WEB_URL}/auth`;
+
 type AuthMode = 'sign-in' | 'create';
+
+function syncLabel(status: AppStore['syncStatus'], error?: string): string {
+  if (status === 'syncing') return 'Updating…';
+  if (status === 'synced') return 'Up to date';
+  if (status === 'error') return error ?? 'Could not reach your account';
+  return 'Saved on this device';
+}
 
 export function AccountView({ store }: { store: AppStore }) {
   const [mode, setMode] = useState<AuthMode>('sign-in');
@@ -11,28 +22,28 @@ export function AccountView({ store }: { store: AppStore }) {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
-  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [signupBlocked, setSignupBlocked] = useState(false);
 
   const submit = async () => {
     setBusy(true);
     setMessage(undefined);
+    setSignupBlocked(false);
     try {
       if (mode === 'sign-in') {
         await store.signIn(email.trim(), password);
-        setAwaitingConfirmation(false);
-        setMessage('Signed in. Your Nexus data is now synced.');
+        setMessage('Signed in. Loading your profile and applications…');
+        setPassword('');
       } else {
         const result = await store.signUp(email.trim(), password);
-        const needsConfirmation = result.includes('Confirmation email sent') || result.includes('Check your inbox');
-        setAwaitingConfirmation(needsConfirmation);
-        setMessage(result);
+        setSignupBlocked(!result.signedIn);
+        setMessage(result.message);
+        if (result.signedIn) setPassword('');
       }
-      if (mode === 'sign-in') setPassword('');
     } catch (error) {
       const text = error instanceof Error ? error.message : String(error);
-      if (text.toLowerCase().includes('email not confirmed')) {
-        setAwaitingConfirmation(true);
-        setMessage('Confirm your email first, then sign in. You can resend the confirmation link below.');
+      if (text.toLowerCase().includes('confirm')) {
+        setSignupBlocked(true);
+        setMessage('Confirm your email first — open the link we sent you, then sign in here.');
       } else {
         setMessage(text);
       }
@@ -41,13 +52,13 @@ export function AccountView({ store }: { store: AppStore }) {
     }
   };
 
-  const resend = async () => {
-    if (!email.trim()) return;
+  const resendVerification = async () => {
+    const targetEmail = store.session?.user.email ?? email.trim();
+    if (!targetEmail) return;
     setBusy(true);
     setMessage(undefined);
     try {
-      setMessage(await store.resendConfirmation(email.trim()));
-      setAwaitingConfirmation(true);
+      setMessage(await store.resendConfirmation(targetEmail));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -58,9 +69,11 @@ export function AccountView({ store }: { store: AppStore }) {
   const switchMode = (next: AuthMode) => {
     setMode(next);
     setMessage(undefined);
-    setAwaitingConfirmation(false);
+    setSignupBlocked(false);
     setPassword('');
   };
+
+  const showVerifyPrompt = store.session && !isEmailVerified(store.session);
 
   return (
     <div className="view">
@@ -68,32 +81,68 @@ export function AccountView({ store }: { store: AppStore }) {
         {store.session ? (
           <>
             <h2 className="auth-title">Your account</h2>
-            <p className="auth-subtitle small muted">Signed in and syncing with nexusnext.lovable.app</p>
+            <p className="auth-subtitle small muted">Signed in to Nexus</p>
             <p className="small" style={{ margin: '10px 0 4px' }}><strong>{store.session.user.email}</strong></p>
             <p className="small muted">
-              Your profile, applications, settings, and saved scholarships stay in sync across the website and extension.
+              Your profile and applications stay in sync between the website and this extension.
             </p>
-            <div className={`banner${store.syncStatus === 'error' ? ' warn' : store.syncStatus === 'synced' ? ' success' : ' info'}`}>
-              {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Supabase' : store.syncError ?? 'Saved locally'}
+
+            {showVerifyPrompt && (
+              <div className="banner info" style={{ marginTop: 10 }}>
+                <strong>Verify your email</strong>
+                <p className="small" style={{ margin: '6px 0 8px' }}>
+                  Optional, but recommended. We will send a link that opens in your browser.
+                </p>
+                <button type="button" className="btn tiny" disabled={busy} onClick={() => void resendVerification()}>
+                  Send verification email
+                </button>
+              </div>
+            )}
+
+            <div className={`banner${store.syncStatus === 'error' ? ' warn' : store.syncStatus === 'synced' ? ' success' : ' info'}`} style={{ marginTop: 10 }}>
+              {syncLabel(store.syncStatus, store.syncError)}
             </div>
-            {store.syncError && <p className="small muted">{store.syncError}</p>}
-            <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
+            <div className="row wrap" style={{ gap: 8, marginTop: 10 }}>
+              <a className="btn tiny" href={NEXUS_WEB_URL} target="_blank" rel="noreferrer">
+                Open website
+              </a>
+              <button type="button" className="btn" onClick={() => void store.signOut()}>Sign out</button>
+            </div>
           </>
         ) : (
           <>
-            <h2 className="auth-title">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2>
+            <div className="website-first-card">
+              <p className="section-title" style={{ margin: 0 }}>New to Nexus?</p>
+              <h2 className="auth-title" style={{ marginTop: 4 }}>Start on the website</h2>
+              <p className="small muted" style={{ margin: '6px 0 10px' }}>
+                Create your account and build your profile on the Nexus website first. Then sign in here with the same
+                email and password to pick up where you left off.
+              </p>
+              <ol className="getting-started-steps">
+                <li>
+                  <a className="link" href={NEXUS_AUTH_URL} target="_blank" rel="noreferrer">
+                    Create your account
+                  </a>{' '}
+                  on the website
+                </li>
+                <li>Fill in your profile there</li>
+                <li>Come back here and sign in below</li>
+              </ol>
+              <a className="btn primary auth-submit" href={NEXUS_AUTH_URL} target="_blank" rel="noreferrer">
+                Go to Nexus website
+              </a>
+            </div>
+
+            <div className="auth-divider">
+              <span>Already have an account?</span>
+            </div>
+
+            <h2 className="auth-title" style={{ marginTop: 0 }}>Sign in</h2>
             <p className="auth-subtitle small muted">
-              {mode === 'sign-in'
-                ? 'Sign in to see your scholarship matches and sync with the website.'
-                : 'One account for Nexus on the web and in this extension.'}
+              Same email and password as the website.
             </p>
 
             <div className="stack" style={{ marginTop: 12 }}>
-              {mode === 'create' && (
-                <p className="small muted" style={{ margin: 0 }}>
-                  Use at least 8 characters. Avoid common or leaked passwords — Supabase will reject weak ones.
-                </p>
-              )}
               <label className="field">
                 Email
                 <input
@@ -108,10 +157,10 @@ export function AccountView({ store }: { store: AppStore }) {
                 <div className="password-field">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-                  minLength={8}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="current-password"
+                    minLength={8}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                   />
                   <button
                     type="button"
@@ -130,28 +179,62 @@ export function AccountView({ store }: { store: AppStore }) {
                 disabled={busy || !email || password.length < 8}
                 onClick={() => void submit()}
               >
-                {mode === 'sign-in' ? 'Sign in' : 'Create account'}
+                Sign in
               </button>
 
               {message && (
-                <div className={`banner${awaitingConfirmation ? ' info' : message.includes('Signed in') || message.includes('sync enabled') ? ' success' : ''}`}>
+                <div
+                  className={`banner${
+                    signupBlocked ? ' warn' : message.includes('Signed in') || message.includes("You're in") ? ' success' : ''
+                  }`}
+                >
                   {message}
                 </div>
               )}
 
-              {awaitingConfirmation && (
-                <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resend()}>
-                  Resend confirmation email
-                </button>
+              {signupBlocked && (
+                <>
+                  <p className="small muted" style={{ margin: 0 }}>
+                    The confirmation link opens in your browser. After confirming, sign in here again.
+                  </p>
+                  <button type="button" className="btn subtle auth-switch" disabled={busy || !email} onClick={() => void resendVerification()}>
+                    Resend confirmation email
+                  </button>
+                </>
               )}
 
-              <button
-                type="button"
-                className="btn subtle auth-switch"
-                onClick={() => switchMode(mode === 'sign-in' ? 'create' : 'sign-in')}
-              >
-                {mode === 'sign-in' ? 'New here? Create an account' : 'Already have an account? Sign in'}
-              </button>
+              <details className="create-here-details">
+                <summary>Create an account here instead</summary>
+                <p className="small muted">
+                  We recommend signing up on the website — it is simpler. If you create an account here, use the same
+                  credentials on the website later.
+                </p>
+                {mode === 'create' ? (
+                  <button type="button" className="btn tiny" onClick={() => switchMode('sign-in')}>
+                    Cancel
+                  </button>
+                ) : (
+                  <button type="button" className="btn tiny" onClick={() => switchMode('create')}>
+                    Continue
+                  </button>
+                )}
+              </details>
+
+              {mode === 'create' && (
+                <>
+                  <p className="small muted" style={{ margin: 0 }}>
+                    Password tips: at least 8 characters, mix letters and numbers, avoid common words.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn auth-submit"
+                    disabled={busy || !email || password.length < 8}
+                    onClick={() => void submit()}
+                  >
+                    Create account
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
@@ -160,7 +243,7 @@ export function AccountView({ store }: { store: AppStore }) {
       <div className="combined-section">
         <div>
           <h2 className="section-heading">Current page tools</h2>
-          <p className="small muted">Scan, autofill, or capture the scholarship open in your active tab.</p>
+          <p className="small muted">Scan, autofill, or capture the scholarship on your active tab.</p>
         </div>
         <PageView store={store} embedded />
       </div>

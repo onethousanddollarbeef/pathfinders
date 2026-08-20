@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { matchAll } from '../../core/matching';
 import { fetchCatalogScholarships } from '../../core/supabaseScholarships';
 import { SCHOLARSHIP_SEARCH_SITES } from '../../data/realScholarshipUrls';
@@ -10,26 +10,25 @@ export function ExploreView({ store }: { store: AppStore }) {
   const [catalog, setCatalog] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const [lastUpdated, setLastUpdated] = useState<Date | undefined>();
+
+  const loadCatalog = useCallback(async () => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      const rows = await fetchCatalogScholarships();
+      setCatalog(rows);
+      setLastUpdated(new Date());
+    } catch (err: unknown) {
+      setError('Could not load scholarships. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    void fetchCatalogScholarships()
-      .then((rows) => {
-        if (active) {
-          setCatalog(rows);
-          setError(undefined);
-        }
-      })
-      .catch((err: unknown) => {
-        if (active) setError(err instanceof Error ? err.message : String(err));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+    void loadCatalog();
+  }, [loadCatalog]);
 
   const matches = useMemo(() => {
     if (!store.state || catalog.length === 0) return [];
@@ -41,12 +40,22 @@ export function ExploreView({ store }: { store: AppStore }) {
     store.saveScholarship(match.scholarship.id);
   };
 
+  const updatedLabel = lastUpdated
+    ? `Last updated ${lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+    : undefined;
+
   return (
     <div className="view">
       <div className="card">
-        <h2 className="section-heading">Suggested scholarships</h2>
+        <div className="spread">
+          <h2 className="section-heading" style={{ margin: 0 }}>Suggested scholarships</h2>
+          <button type="button" className="btn tiny" disabled={loading} onClick={() => void loadCatalog()}>
+            Refresh
+          </button>
+        </div>
         <p className="small muted" style={{ margin: '4px 0 0' }}>
-          Curated awards from live scholarship databases. Each link opens the real application or search site.
+          Pulled from the Nexus catalog when you open this tab{updatedLabel ? ` · ${updatedLabel}` : ''}. Tap Refresh
+          for the latest list — not a live stream, but always current when you reload.
         </p>
       </div>
 
@@ -54,7 +63,7 @@ export function ExploreView({ store }: { store: AppStore }) {
       {error && <div className="banner warn">{error}</div>}
 
       {!loading && !error && matches.length === 0 && (
-        <EmptyState title="No scholarships loaded" hint="Check your connection and try again." />
+        <EmptyState title="No scholarships loaded" hint="Check your connection and tap Refresh." />
       )}
 
       {matches.map((match) => (
@@ -86,9 +95,9 @@ export function ExploreView({ store }: { store: AppStore }) {
       ))}
 
       <div className="card">
-        <h2 className="section-heading">Live scholarship search sites</h2>
+        <h2 className="section-heading">Scholarship search sites</h2>
         <p className="small muted" style={{ margin: '4px 0 10px' }}>
-          These databases update listings continuously. Open one, find an award, then save it here or on nexusnext.lovable.app.
+          These sites update their listings often. Browse there, then save anything you find here or on the Nexus website.
         </p>
         <div className="stack">
           {SCHOLARSHIP_SEARCH_SITES.map((site) => (

@@ -28,14 +28,36 @@ The extension uses project `zrqfanveghxodzavjrkb` (see `src/core/supabase.ts`). 
 | `student_documents` | Document locker (website) |
 | `supplemental_answers` | Per-scholarship profile prompts (website) |
 
-### Auth checklist
+## Recommended flow: website first, then extension
 
-1. In Supabase **Authentication → URL Configuration**, add `https://nexusnext.lovable.app/auth` to **Redirect URLs**.
-2. Enable **Confirm email** if you want verification emails on signup (recommended).
-3. Configure SMTP or use Supabase’s mailer so confirmation emails actually send.
-4. Passwords must be at least 8 characters and not on known breach lists (Supabase rejects weak passwords).
+Both the website and extension use the **same Supabase project and the same email/password accounts**. They are one pipeline — but the **experience** differs:
 
-Accounts created in the extension use the same Supabase Auth users as the website. After confirming email, sign in on either surface to sync.
+| Step | Website | Extension |
+| --- | --- | --- |
+| Create account | Best place — confirmation links open in the browser and onboarding runs there | Possible, but confirmation links still open on the website, not inside the panel |
+| Build profile | Full onboarding on nexusnext.lovable.app | Loads from Supabase after sign-in |
+| Daily use | Browse, analyze, track | Autofill, capture pages, quick sync |
+
+**Recommended:** [Create an account](https://nexusnext.lovable.app/auth) on the website → complete your profile → open the extension **Account** tab → **Sign in** with the same credentials.
+
+### Why confirmation emails seem to work on the website but not the extension
+
+They are sent by the same Supabase Auth service (`noreply@mail.app.supabase.io` or your custom SMTP). The difference is what happens after you click the link:
+
+- **Website signup:** Supabase redirects back to `nexusnext.lovable.app` — the site finishes login in the browser and shows “check your email” clearly.
+- **Extension signup:** The same email is sent, but the link opens the **website**, not the Chrome panel. You must confirm in the browser, then **sign in on the extension** separately. Sessions do not transfer automatically between browser tabs and the extension.
+
+That is why the extension UI directs new users to start on the website.
+
+### Supabase settings via Lovable
+
+If you manage the project through Lovable:
+
+1. Open your Lovable project → **Settings** or **Integrations** → **Supabase** → open the linked Supabase dashboard (or use project `zrqfanveghxodzavjrkb` directly).
+2. **Authentication → Providers → Email** — you can turn **Confirm email** off for instant sign-up everywhere, or leave it on and rely on the website-first flow above.
+3. **Redirect URLs** must include `https://nexusnext.lovable.app/**` so confirmation links work on the site.
+
+You do **not** need to change Supabase settings if users create accounts on the website first and only sign in on the extension.
 
 ## Install (development)
 
