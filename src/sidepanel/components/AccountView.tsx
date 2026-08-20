@@ -23,7 +23,7 @@ export function AccountView({ store }: { store: AppStore }) {
         setMessage('Signed in. Your Nexus data is now synced.');
       } else {
         const result = await store.signUp(email.trim(), password);
-        const needsConfirmation = result.includes('Confirmation email sent');
+        const needsConfirmation = result.includes('Confirmation email sent') || result.includes('Check your inbox');
         setAwaitingConfirmation(needsConfirmation);
         setMessage(result);
       }
@@ -89,6 +89,11 @@ export function AccountView({ store }: { store: AppStore }) {
             </p>
 
             <div className="stack" style={{ marginTop: 12 }}>
+              {mode === 'create' && (
+                <p className="small muted" style={{ margin: 0 }}>
+                  Use at least 8 characters. Avoid common or leaked passwords — Supabase will reject weak ones.
+                </p>
+              )}
               <label className="field">
                 Email
                 <input
@@ -104,9 +109,9 @@ export function AccountView({ store }: { store: AppStore }) {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-                    minLength={6}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                  minLength={8}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                   />
                   <button
                     type="button"
@@ -122,7 +127,7 @@ export function AccountView({ store }: { store: AppStore }) {
               <button
                 type="button"
                 className="btn primary auth-submit"
-                disabled={busy || !email || password.length < 6}
+                disabled={busy || !email || password.length < 8}
                 onClick={() => void submit()}
               >
                 {mode === 'sign-in' ? 'Sign in' : 'Create account'}

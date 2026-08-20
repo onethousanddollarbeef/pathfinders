@@ -259,7 +259,7 @@ async function main() {
     await panel.waitForSelector('.app-header h1', { timeout: 10000 });
 
     const tabs = await panel.$$eval('.tabs .tab', (nodes) => nodes.map((node) => node.textContent.trim()));
-    check('side panel renders all tabs', tabs.length === 4, tabs.join(', '));
+    check('side panel renders all tabs', tabs.length === 5, tabs.join(', '));
     check('side panel has no page errors', panelErrors.length === 0, panelErrors.join(' | '));
 
     const headerTitle = await panel.$eval('.app-header h1', (node) => node.textContent.trim());
@@ -270,6 +270,14 @@ async function main() {
 
     const homeStats = await panel.$$eval('.metric .value', (nodes) => nodes.map((node) => node.textContent.trim()));
     check('home shows computed metrics', homeStats.length >= 3, homeStats.slice(0, 3).join(' / '));
+
+    await clickTab(panel, 'Explore');
+    await panel.waitForFunction(
+      () => document.querySelectorAll('.match-card').length > 0 || document.querySelector('.banner.warn'),
+      { timeout: 12000 },
+    );
+    const exploreCards = await panel.$$eval('.match-card', (nodes) => nodes.length);
+    check('explore lists suggested scholarships', exploreCards > 0, `${exploreCards} cards`);
 
     await clickTab(panel, 'Applications');
     const tracked = await panel.$$eval('.match-card', (nodes) => nodes.length);

@@ -3,12 +3,14 @@ import { useAppState } from './useAppState';
 import { DashboardView } from './components/DashboardView';
 import { ProfileView } from './components/ProfileView';
 import { TrackerView } from './components/TrackerView';
+import { ExploreView } from './components/ExploreView';
 import { AccountView } from './components/AccountView';
 
-export type TabId = 'home' | 'profile' | 'tracker' | 'account';
+export type TabId = 'home' | 'explore' | 'profile' | 'tracker' | 'account';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'home', label: 'Home' },
+  { id: 'explore', label: 'Explore' },
   { id: 'profile', label: 'Profile' },
   { id: 'tracker', label: 'Applications' },
   { id: 'account', label: 'Account' },
@@ -81,6 +83,7 @@ export function App() {
       </nav>
 
       {tab === 'home' && <DashboardView store={store} onNavigate={setTab} />}
+      {tab === 'explore' && <ExploreView store={store} />}
       {tab === 'profile' && <ProfileView store={store} />}
       {tab === 'tracker' && <TrackerView store={store} />}
       {tab === 'account' && <AccountView store={store} />}

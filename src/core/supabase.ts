@@ -1,5 +1,3 @@
-import type { AppState } from './storage';
-
 export const SUPABASE_PROJECT_ID = 'zrqfanveghxodzavjrkb';
 export const SUPABASE_URL = 'https://zrqfanveghxodzavjrkb.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_t6NOr6t__1Sy01GLMVs77w_w35aLL37';
@@ -58,6 +56,26 @@ async function setSession(session?: SupabaseSession): Promise<void> {
   else await area.remove(SESSION_KEY);
 }
 
+function parseAuthError(body: string, status: number): string {
+  let message = body || `Supabase request failed (${status})`;
+  try {
+    const parsed = JSON.parse(body) as {
+      msg?: string;
+      message?: string;
+      error_description?: string;
+      error_code?: string;
+    };
+    if (parsed.error_code === 'weak_password') {
+      return 'Choose a stronger password — at least 8 characters and not a common or leaked password.';
+    }
+    if (parsed.error_code === 'user_already_registered') {
+      return 'An account with this email already exists. Sign in instead.';
+    }
+    message = parsed.msg ?? parsed.message ?? parsed.error_description ?? message;
+  } catch { /* plain-text error */ }
+  return message;
+}
+
 async function request<T>(path: string, init: RequestInit = {}, accessToken?: string): Promise<T> {
   const response = await fetch(`${SUPABASE_URL}${path}`, {
     ...init,
@@ -70,12 +88,7 @@ async function request<T>(path: string, init: RequestInit = {}, accessToken?: st
   });
   const body = await response.text();
   if (!response.ok) {
-    let message = body || `Supabase request failed (${response.status})`;
-    try {
-      const parsed = JSON.parse(body) as { msg?: string; message?: string; error_description?: string };
-      message = parsed.msg ?? parsed.message ?? parsed.error_description ?? message;
-    } catch { /* Supabase occasionally returns a plain-text proxy error. */ }
-    throw new Error(message);
+    throw new Error(parseAuthError(body, response.status));
   }
   return (body ? JSON.parse(body) : undefined) as T;
 }
@@ -86,6 +99,7 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
     refresh_token?: string;
     expires_in?: number;
     user: SupabaseUser;
+    confirmation_sent_at?: string;
   }>(
     '/auth/v1/signup',
     {
@@ -101,7 +115,9 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
   if (!result.access_token || !result.refresh_token) {
     return {
       confirmationRequired: true,
-      message: `Confirmation email sent to ${email}. Open the link in that message, then sign in here to sync.`,
+      message: result.confirmation_sent_at
+        ? `Confirmation email sent to ${email}. Open the link in that message, then sign in here to sync.`
+        : `Account created for ${email}. Check your inbox to confirm your email, then sign in.`,
     };
   }
 
@@ -117,7 +133,7 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
 
 export async function resendConfirmationEmail(email: string): Promise<string> {
   await request(
-  `/auth/v1/resend?redirect_to=${encodeURIComponent(NEXUS_AUTH_REDIRECT_URL)}`,
+    `/auth/v1/resend?redirect_to=${encodeURIComponent(NEXUS_AUTH_REDIRECT_URL)}`,
     {
       method: 'POST',
       body: JSON.stringify({
@@ -145,18 +161,5 @@ export async function signOut(session?: SupabaseSession): Promise<void> {
   await setSession();
 }
 
-export async function pullState(session: SupabaseSession): Promise<AppState | undefined> {
-  const rows = await request<Array<{ state: AppState }>>(
-    `/rest/v1/scholarpath_states?user_id=eq.${encodeURIComponent(session.user.id)}&select=state&limit=1`,
-    { method: 'GET' }, session.access_token,
-  );
-  return rows[0]?.state;
-}
-
-export async function pushState(session: SupabaseSession, state: AppState): Promise<void> {
-  await request('/rest/v1/scholarpath_states?on_conflict=user_id', {
-    method: 'POST',
-    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({ user_id: session.user.id, state, updated_at: new Date().toISOString() }),
-  }, session.access_token);
-}
+// Re-export sync helpers from nexusSync for convenience
+export { pullState, pushState, ensureRemoteProfile } from './nexusSync';

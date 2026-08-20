@@ -85,6 +85,28 @@ textarea {
   min-width: 0;
 }
 
+.explore-site-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.explore-site-link:hover {
+  border-color: #f0c9a8;
+  background: var(--accent-soft);
+}
+
+.explore-site-link strong {
+  font-size: 12.5px;
+  color: var(--text);
+}
+
 .logo-shell {
   flex: none;
   display: flex;
