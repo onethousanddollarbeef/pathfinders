@@ -16,8 +16,6 @@ import { setPendingCaptureReview } from '../shared/pendingCapture';
 
 const INIT_KEY = '__nexusContentScriptLoaded';
 
-const INIT_KEY = '__nexusContentScriptLoaded';
-
 const DISMISS_KEY = 'scholarpath:dismissed-origins';
 let overlay: Overlay | undefined;
 
