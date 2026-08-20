@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { AppStore } from '../useAppState';
+import { PageView } from './PageView';
 
 export function AccountView({ store }: { store: AppStore }) {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ export function AccountView({ store }: { store: AppStore }) {
     try {
       if (mode === 'in') {
         await store.signIn(email.trim(), password);
-        setMessage('Signed in. Your Supabase data is now synced.');
+        setMessage('Signed in. Your Nexus data is now synced.');
       } else {
         setMessage(await store.signUp(email.trim(), password));
       }
@@ -33,8 +34,8 @@ export function AccountView({ store }: { store: AppStore }) {
           <>
             <p className="small" style={{ margin: '6px 0' }}><strong>{store.session.user.email}</strong></p>
             <p className="small muted">
-              Your profile, applications, settings, and saved scholarships are stored in Supabase and available to the
-              website when you sign in with this same account.
+              Your profile, applications, settings, and saved scholarships are stored in Supabase and available on
+              nexusnext.lovable.app when you sign in with this same account.
             </p>
             <div className={`banner${store.syncStatus === 'error' ? ' warn' : ''}`}>
               {store.syncStatus === 'syncing' ? 'Syncing…' : store.syncStatus === 'synced' ? 'Synced with Supabase' : store.syncError ?? 'Saved locally'}
@@ -45,7 +46,8 @@ export function AccountView({ store }: { store: AppStore }) {
         ) : (
           <div className="stack">
             <p className="small muted" style={{ margin: 0 }}>
-              Create an account or sign in to share your ScholarPath data with the website. Data remains cached on this device for offline use.
+              Create an account or sign in to share your Nexus data with the website and extension. Data remains cached
+              on this device for offline use.
             </p>
             <label className="field">Email
               <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
@@ -60,6 +62,13 @@ export function AccountView({ store }: { store: AppStore }) {
             {message && <div className="banner">{message}</div>}
           </div>
         )}
+      </div>
+      <div className="combined-section">
+        <div>
+          <h2>Current page tools</h2>
+          <p className="small muted">Scan, autofill, or capture the scholarship open in your active tab.</p>
+        </div>
+        <PageView store={store} embedded />
       </div>
     </div>
   );
