@@ -4,7 +4,6 @@ import type { AppStore } from '../useAppState';
 import { PageView } from './PageView';
 
 const NEXUS_WEB_URL = 'https://nexusnext.lovable.app';
-const NEXUS_AUTH_URL = `${NEXUS_WEB_URL}/auth`;
 
 type AuthMode = 'sign-in' | 'create';
 
@@ -111,38 +110,19 @@ export function AccountView({ store }: { store: AppStore }) {
           </>
         ) : (
           <>
-            <div className="website-first-card">
-              <p className="section-title" style={{ margin: 0 }}>New to Nexus?</p>
-              <h2 className="auth-title" style={{ marginTop: 4 }}>Start on the website</h2>
-              <p className="small muted" style={{ margin: '6px 0 10px' }}>
-                Create your account and build your profile on the Nexus website first. Then sign in here with the same
-                email and password to pick up where you left off.
-              </p>
-              <ol className="getting-started-steps">
-                <li>
-                  <a className="link" href={NEXUS_AUTH_URL} target="_blank" rel="noreferrer">
-                    Create your account
-                  </a>{' '}
-                  on the website
-                </li>
-                <li>Fill in your profile there</li>
-                <li>Come back here and sign in below</li>
-              </ol>
-              <a className="btn primary auth-submit" href={NEXUS_AUTH_URL} target="_blank" rel="noreferrer">
-                Go to Nexus website
-              </a>
-            </div>
-
-            <div className="auth-divider">
-              <span>Already have an account?</span>
-            </div>
-
-            <h2 className="auth-title" style={{ marginTop: 0 }}>Sign in</h2>
+            <h2 className="auth-title">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2>
             <p className="auth-subtitle small muted">
-              Same email and password as the website.
+              {mode === 'sign-in'
+                ? 'Sign in to load your profile, applications, and scholarship matches.'
+                : 'Create an account here or on the website — same email and password works everywhere.'}
             </p>
 
             <div className="stack" style={{ marginTop: 12 }}>
+              {mode === 'create' && (
+                <p className="small muted" style={{ margin: 0 }}>
+                  Password tips: at least 8 characters, mix letters and numbers, avoid common words.
+                </p>
+              )}
               <label className="field">
                 Email
                 <input
@@ -157,7 +137,7 @@ export function AccountView({ store }: { store: AppStore }) {
                 <div className="password-field">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
+                    autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
                     minLength={8}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
@@ -179,7 +159,7 @@ export function AccountView({ store }: { store: AppStore }) {
                 disabled={busy || !email || password.length < 8}
                 onClick={() => void submit()}
               >
-                Sign in
+                {mode === 'sign-in' ? 'Sign in' : 'Create account'}
               </button>
 
               {message && (
@@ -203,38 +183,13 @@ export function AccountView({ store }: { store: AppStore }) {
                 </>
               )}
 
-              <details className="create-here-details">
-                <summary>Create an account here instead</summary>
-                <p className="small muted">
-                  We recommend signing up on the website — it is simpler. If you create an account here, use the same
-                  credentials on the website later.
-                </p>
-                {mode === 'create' ? (
-                  <button type="button" className="btn tiny" onClick={() => switchMode('sign-in')}>
-                    Cancel
-                  </button>
-                ) : (
-                  <button type="button" className="btn tiny" onClick={() => switchMode('create')}>
-                    Continue
-                  </button>
-                )}
-              </details>
-
-              {mode === 'create' && (
-                <>
-                  <p className="small muted" style={{ margin: 0 }}>
-                    Password tips: at least 8 characters, mix letters and numbers, avoid common words.
-                  </p>
-                  <button
-                    type="button"
-                    className="btn auth-submit"
-                    disabled={busy || !email || password.length < 8}
-                    onClick={() => void submit()}
-                  >
-                    Create account
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                className="btn subtle auth-switch"
+                onClick={() => switchMode(mode === 'sign-in' ? 'create' : 'sign-in')}
+              >
+                {mode === 'sign-in' ? 'New here? Create an account' : 'Already have an account? Sign in'}
+              </button>
             </div>
           </>
         )}

@@ -178,9 +178,7 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
     return {
       signedIn: false,
       verificationOptional: true,
-      message:
-        `We created your account. Confirm your email using the link we sent you, then sign in here. ` +
-        `Tip: it is easier to sign up on nexusnext.lovable.app first.`,
+      message: 'We created your account. Confirm your email using the link we sent you, then sign in here.',
     };
   }
 }
