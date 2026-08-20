@@ -20,7 +20,7 @@ export const STATUS_ORDER: ApplicationStatus[] = ['saved', 'started', 'submitted
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   saved: 'Saved',
   started: 'In progress',
-  submitted: 'Submitted',
+  submitted: 'Complete',
   awarded: 'Awarded',
   rejected: 'Not selected',
   skipped: 'Skipped',

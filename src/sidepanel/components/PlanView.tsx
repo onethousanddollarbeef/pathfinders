@@ -12,7 +12,7 @@ const BUCKET_TITLES: Record<PlanItem['bucket'], string> = {
 
 const BUCKET_ORDER: PlanItem['bucket'][] = ['do-now', 'this-week', 'upcoming', 'stretch', 'skip'];
 
-export function PlanView({ store }: { store: AppStore }) {
+export function PlanView({ store, embedded = false }: { store: AppStore; embedded?: boolean }) {
   const plan = store.plan;
   const state = store.state;
   if (!plan || !state) return null;
@@ -22,7 +22,7 @@ export function PlanView({ store }: { store: AppStore }) {
 
   if (plan.items.length === 0) {
     return (
-      <div className="view">
+      <div className={embedded ? 'embedded-view' : 'view'}>
         <EmptyState
           title="No applications to plan yet"
           hint="Fill in your profile and save a few matches from Discover — the plan orders them by what earns the most per hour you spend."
@@ -32,7 +32,7 @@ export function PlanView({ store }: { store: AppStore }) {
   }
 
   return (
-    <div className="view">
+    <div className={embedded ? 'embedded-view' : 'view'}>
       <div className="card">
         <h2 style={{ margin: 0 }}>Your application plan</h2>
         <p className="small muted" style={{ margin: '4px 0 8px' }}>

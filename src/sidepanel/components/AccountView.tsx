@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { AppStore } from '../useAppState';
+import { PageView } from './PageView';
 
 export function AccountView({ store }: { store: AppStore }) {
   const [email, setEmail] = useState('');
@@ -60,6 +61,13 @@ export function AccountView({ store }: { store: AppStore }) {
             {message && <div className="banner">{message}</div>}
           </div>
         )}
+      </div>
+      <div className="combined-section">
+        <div>
+          <h2>Current page tools</h2>
+          <p className="small muted">Scan, autofill, or capture the scholarship open in your active tab.</p>
+        </div>
+        <PageView store={store} embedded />
       </div>
     </div>
   );
