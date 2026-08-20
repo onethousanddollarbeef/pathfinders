@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from './useAppState';
 import { DashboardView } from './components/DashboardView';
 import { ProfileView } from './components/ProfileView';
 import { TrackerView } from './components/TrackerView';
 import { ExploreView } from './components/ExploreView';
 import { AccountView } from './components/AccountView';
+import type { CapturedScholarship } from '../core/pageCapture';
+import { PENDING_CAPTURE_KEY, takePendingCaptureReview } from '../shared/pendingCapture';
 
 export type TabId = 'home' | 'explore' | 'profile' | 'tracker' | 'account';
 
@@ -19,6 +21,31 @@ const TABS: { id: TabId; label: string }[] = [
 export function App() {
   const store = useAppState();
   const [tab, setTab] = useState<TabId>('home');
+  const [captureReview, setCaptureReview] = useState<CapturedScholarship | undefined>();
+
+  const applyCapture = (captured: CapturedScholarship) => {
+    store.addCustomScholarship(captured.draft);
+    store.saveScholarship(captured.draft.id);
+    setCaptureReview(captured);
+    setTab('tracker');
+  };
+
+  useEffect(() => {
+    if (!store.state) return;
+
+    const consumePending = () => {
+      void takePendingCaptureReview().then((pending) => {
+        if (pending) applyCapture(pending);
+      });
+    };
+
+    consumePending();
+    const onChanged = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes[PENDING_CAPTURE_KEY]?.newValue) consumePending();
+    };
+    chrome.storage.session.onChanged.addListener(onChanged);
+    return () => chrome.storage.session.onChanged.removeListener(onChanged);
+  }, [store.state]);
 
   if (!store.state) {
     return (
@@ -82,10 +109,18 @@ export function App() {
         })}
       </nav>
 
-      {tab === 'home' && <DashboardView store={store} onNavigate={setTab} />}
+      {tab === 'home' && (
+        <DashboardView store={store} onNavigate={setTab} onCaptured={applyCapture} />
+      )}
       {tab === 'explore' && <ExploreView store={store} />}
       {tab === 'profile' && <ProfileView store={store} />}
-      {tab === 'tracker' && <TrackerView store={store} />}
+      {tab === 'tracker' && (
+        <TrackerView
+          store={store}
+          captureReview={captureReview}
+          onCaptureReviewDone={() => setCaptureReview(undefined)}
+        />
+      )}
       {tab === 'account' && <AccountView store={store} />}
 
       <footer className="continue-footer">
