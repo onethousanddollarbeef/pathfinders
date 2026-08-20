@@ -1,29 +1,18 @@
 import { useState } from 'react';
 import { profileCompleteness, findHighImpactGaps } from '../../core/profile';
+import { WEBSITE_GRADE_LEVELS } from '../../core/profileSchema';
 import { Chip, Progress, money } from './common';
 import type { AppStore } from '../useAppState';
 import type {
   ActivityEntry,
   CitizenshipStatus,
-  EducationLevel,
   EssayAsset,
   RecommenderEntry,
   StudentProfile,
 } from '../../core/types';
+import { educationLevelToGradeLevel, gradeLevelToEducationLevel, joinFullName, splitFullName } from '../../core/profileSchema';
 
-const LEVELS: { value: EducationLevel; label: string }[] = [
-  { value: 'high-school-freshman', label: 'High school freshman' },
-  { value: 'high-school-sophomore', label: 'High school sophomore' },
-  { value: 'high-school-junior', label: 'High school junior' },
-  { value: 'high-school-senior', label: 'High school senior' },
-  { value: 'undergrad-freshman', label: 'College freshman' },
-  { value: 'undergrad-sophomore', label: 'College sophomore' },
-  { value: 'undergrad-junior', label: 'College junior' },
-  { value: 'undergrad-senior', label: 'College senior' },
-  { value: 'graduate', label: 'Graduate student' },
-  { value: 'doctoral', label: 'Doctoral student' },
-  { value: 'non-traditional', label: 'Non-traditional / returning' },
-];
+const LEVELS = WEBSITE_GRADE_LEVELS.map((label) => ({ value: label, label }));
 
 const CITIZENSHIPS: { value: CitizenshipStatus; label: string }[] = [
   { value: 'us-citizen', label: 'U.S. citizen' },
@@ -158,32 +147,23 @@ export function ProfileView({ store }: { store: AppStore }) {
           </p>
         )}
         <p className="small muted" style={{ margin: '6px 0 0' }}>
-          Your profile is saved on this device. Sign in under Account to back it up and use it on the website too.
-          Demographic fields are optional — they only help us check which scholarships you qualify for.
+          These fields match your Nexus website profile and sync when you are signed in. Extra sections below stay on
+          this device to power autofill and planning.
         </p>
       </div>
 
-      <Section title="Basics" subtitle="Used to autofill applications.">
-        <div className="grid-2">
-          <label className="field">
-            First name
-            <input type="text" value={profile.firstName ?? ''} onChange={(e) => set('firstName', e.target.value)} />
-          </label>
-          <label className="field">
-            Last name
-            <input type="text" value={profile.lastName ?? ''} onChange={(e) => set('lastName', e.target.value)} />
-          </label>
-        </div>
-        <div className="grid-2">
-          <label className="field">
-            Preferred name
-            <input type="text" value={profile.preferredName ?? ''} onChange={(e) => set('preferredName', e.target.value)} />
-          </label>
-          <label className="field">
-            Date of birth
-            <input type="date" value={profile.dateOfBirth ?? ''} onChange={(e) => set('dateOfBirth', e.target.value)} />
-          </label>
-        </div>
+      <Section title="Profile" subtitle="Synced with nexusnext.lovable.app when signed in.">
+        <label className="field">
+          Full name
+          <input
+            type="text"
+            value={joinFullName(profile.firstName, profile.lastName) ?? ''}
+            onChange={(e) => {
+              const { firstName, lastName } = splitFullName(e.target.value);
+              store.updateProfile((current) => ({ ...current, firstName, lastName }));
+            }}
+          />
+        </label>
         <div className="grid-2">
           <label className="field">
             Email
@@ -192,6 +172,121 @@ export function ProfileView({ store }: { store: AppStore }) {
           <label className="field">
             Phone
             <input type="text" value={profile.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
+          </label>
+        </div>
+        <label className="field">
+          School
+          <input
+            type="text"
+            value={profile.academics.currentSchool ?? ''}
+            onChange={(e) => setAcademics({ currentSchool: e.target.value })}
+          />
+        </label>
+        <div className="grid-2">
+          <label className="field">
+            GPA
+            <input
+              type="number"
+              step="0.01"
+              value={profile.academics.gpa ?? ''}
+              onChange={(e) => setAcademics({ gpa: numberOrUndefined(e.target.value) })}
+            />
+          </label>
+          <label className="field">
+            Graduation year
+            <input
+              type="number"
+              value={profile.academics.graduationYear ?? ''}
+              onChange={(e) => setAcademics({ graduationYear: numberOrUndefined(e.target.value) })}
+            />
+          </label>
+        </div>
+        <label className="field">
+          Major
+          <input
+            type="text"
+            value={profile.academics.intendedMajors?.[0] ?? ''}
+            onChange={(e) => setAcademics({ intendedMajors: e.target.value.trim() ? [e.target.value.trim()] : [] })}
+          />
+        </label>
+        <label className="field">
+          Bio
+          <textarea value={profile.bio ?? ''} onChange={(e) => set('bio', e.target.value)} />
+        </label>
+        <div className="grid-2">
+          <label className="field">
+            Grade level
+            <select
+              value={educationLevelToGradeLevel(profile.academics.level) ?? ''}
+              onChange={(e) => setAcademics({ level: gradeLevelToEducationLevel(e.target.value) })}
+            >
+              <option value="">Select…</option>
+              {LEVELS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            State
+            <input
+              type="text"
+              placeholder="Washington"
+              value={profile.state ?? ''}
+              onChange={(e) => set('state', e.target.value)}
+            />
+          </label>
+        </div>
+        <TagInput
+          label="Demographics"
+          placeholder='e.g. Woman — same JSON array as the website'
+          values={profile.demographics.tags ?? []}
+          onChange={(next) => setDemographics({ tags: next, gender: next[0] })}
+        />
+        <div className="grid-3">
+          <label className="field">
+            First-generation
+            <select
+              value={triState(profile.demographics.firstGeneration)}
+              onChange={(e) => setDemographics({ firstGeneration: parseTriState(e.target.value) })}
+            >
+              <option value="">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+          <label className="field">
+            Disability
+            <select
+              value={triState(profile.demographics.disability)}
+              onChange={(e) => setDemographics({ disability: parseTriState(e.target.value) })}
+            >
+              <option value="">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+          <label className="field">
+            LGBTQ+
+            <select value={triState(profile.demographics.lgbtq)} onChange={(e) => setDemographics({ lgbtq: parseTriState(e.target.value) })}>
+              <option value="">Prefer not to say</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+        </div>
+      </Section>
+
+      <Section title="Contact and citizenship" subtitle="Extension autofill — saved locally, not synced to the website yet.">
+        <div className="grid-2">
+          <label className="field">
+            Preferred name
+            <input type="text" value={profile.preferredName ?? ''} onChange={(e) => set('preferredName', e.target.value)} />
+          </label>
+          <label className="field">
+            Date of birth
+            <input type="date" value={profile.dateOfBirth ?? ''} onChange={(e) => set('dateOfBirth', e.target.value)} />
           </label>
         </div>
         <label className="field">
@@ -204,18 +299,12 @@ export function ProfileView({ store }: { store: AppStore }) {
             <input type="text" value={profile.city ?? ''} onChange={(e) => set('city', e.target.value)} />
           </label>
           <label className="field">
-            State
-            <input
-              type="text"
-              maxLength={2}
-              placeholder="CA"
-              value={profile.state ?? ''}
-              onChange={(e) => set('state', e.target.value.toUpperCase())}
-            />
-          </label>
-          <label className="field">
             ZIP
             <input type="text" value={profile.postalCode ?? ''} onChange={(e) => set('postalCode', e.target.value)} />
+          </label>
+          <label className="field">
+            Country
+            <input type="text" value={profile.country ?? ''} onChange={(e) => set('country', e.target.value)} />
           </label>
         </div>
         <label className="field">
@@ -231,41 +320,8 @@ export function ProfileView({ store }: { store: AppStore }) {
         </label>
       </Section>
 
-      <Section title="Academics">
-        <div className="grid-2">
-          <label className="field">
-            Education level
-            <select
-              value={profile.academics.level ?? ''}
-              onChange={(e) => setAcademics({ level: (e.target.value || undefined) as EducationLevel })}
-            >
-              <option value="">Select…</option>
-              {LEVELS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            Graduation year
-            <input
-              type="number"
-              value={profile.academics.graduationYear ?? ''}
-              onChange={(e) => setAcademics({ graduationYear: numberOrUndefined(e.target.value) })}
-            />
-          </label>
-        </div>
+      <Section title="Academics (extension)" subtitle="Optional details for matching and autofill on this device.">
         <div className="grid-3">
-          <label className="field">
-            GPA
-            <input
-              type="number"
-              step="0.01"
-              value={profile.academics.gpa ?? ''}
-              onChange={(e) => setAcademics({ gpa: numberOrUndefined(e.target.value) })}
-            />
-          </label>
           <label className="field">
             GPA scale
             <input
@@ -275,20 +331,6 @@ export function ProfileView({ store }: { store: AppStore }) {
               onChange={(e) => setAcademics({ gpaScale: numberOrUndefined(e.target.value) })}
             />
           </label>
-          <label className="field">
-            Enrollment
-            <select
-              value={profile.academics.enrollment ?? ''}
-              onChange={(e) => setAcademics({ enrollment: (e.target.value || undefined) as 'full-time' })}
-            >
-              <option value="">Select…</option>
-              <option value="full-time">Full-time</option>
-              <option value="part-time">Part-time</option>
-              <option value="not-enrolled">Not enrolled</option>
-            </select>
-          </label>
-        </div>
-        <div className="grid-2">
           <label className="field">
             SAT total
             <input
@@ -307,22 +349,30 @@ export function ProfileView({ store }: { store: AppStore }) {
           </label>
         </div>
         <label className="field">
-          Current school
-          <input
-            type="text"
-            value={profile.academics.currentSchool ?? ''}
-            onChange={(e) => setAcademics({ currentSchool: e.target.value })}
-          />
+          Enrollment
+          <select
+            value={profile.academics.enrollment ?? ''}
+            onChange={(e) => setAcademics({ enrollment: (e.target.value || undefined) as 'full-time' })}
+          >
+            <option value="">Select…</option>
+            <option value="full-time">Full-time</option>
+            <option value="part-time">Part-time</option>
+            <option value="not-enrolled">Not enrolled</option>
+          </select>
         </label>
         <TagInput
-          label="Intended major(s)"
-          placeholder="e.g. computer science"
-          values={profile.academics.intendedMajors ?? []}
-          onChange={(next) => setAcademics({ intendedMajors: next })}
+          label="Additional majors"
+          placeholder="e.g. economics"
+          values={(profile.academics.intendedMajors ?? []).slice(1)}
+          onChange={(next) =>
+            setAcademics({
+              intendedMajors: [profile.academics.intendedMajors?.[0], ...next].filter(Boolean) as string[],
+            })
+          }
         />
       </Section>
 
-      <Section title="Financial" subtitle="Unlocks need-based awards, which are usually less competitive.">
+      <Section title="Financial" subtitle="Local only — helps match need-based awards in the extension.">
         <div className="grid-2">
           <label className="field">
             Household income
@@ -361,24 +411,7 @@ export function ProfileView({ store }: { store: AppStore }) {
         </div>
       </Section>
 
-      <Section title="Background" subtitle="Optional. Only used to check eligibility rules — leave anything blank.">
-        <div className="grid-2">
-          <label className="field">
-            Gender
-            <input type="text" value={profile.demographics.gender ?? ''} onChange={(e) => setDemographics({ gender: e.target.value })} />
-          </label>
-          <label className="field">
-            First-generation
-            <select
-              value={triState(profile.demographics.firstGeneration)}
-              onChange={(e) => setDemographics({ firstGeneration: parseTriState(e.target.value) })}
-            >
-              <option value="">Unknown</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-        </div>
+      <Section title="More background" subtitle="Local only — optional eligibility signals for scholarship matching.">
         <TagInput
           label="Ethnicity / heritage"
           values={profile.demographics.ethnicities ?? []}
@@ -390,30 +423,9 @@ export function ProfileView({ store }: { store: AppStore }) {
           values={profile.demographics.militaryAffiliation ?? []}
           onChange={(next) => setDemographics({ militaryAffiliation: next })}
         />
-        <div className="grid-2">
-          <label className="field">
-            Documented disability
-            <select
-              value={triState(profile.demographics.disability)}
-              onChange={(e) => setDemographics({ disability: parseTriState(e.target.value) })}
-            >
-              <option value="">Unknown</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-          <label className="field">
-            LGBTQ+
-            <select value={triState(profile.demographics.lgbtq)} onChange={(e) => setDemographics({ lgbtq: parseTriState(e.target.value) })}>
-              <option value="">Prefer not to say</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-        </div>
       </Section>
 
-      <Section title="Interests and activities">
+      <Section title="Interests and activities" subtitle="Local only.">
         <TagInput
           label="Interests"
           placeholder="e.g. robotics, sustainability"

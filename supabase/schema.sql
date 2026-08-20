@@ -5,8 +5,10 @@
 -- This file documents the extension sync model; run only if you are bootstrapping a fresh project.
 
 -- Profiles: one row per auth user (id matches auth.users.id)
--- Columns used by the extension: id, email, full_name, gpa, major, grade_level, state,
--- phone, school, graduation_year, fafsa_completed, demographics (jsonb extension payload)
+-- Columns used by the extension (matches nexusnext.lovable.app `profiles` table):
+-- id, full_name, email, phone, school, graduation_year, gpa, major, bio,
+-- grade_level, state, demographics (json array e.g. ["Woman"]),
+-- first_generation, disability, lgbtq
 
 -- User scholarships: tracks saved/started/submitted per user
 -- Status values: saved, started, planning, submitted
