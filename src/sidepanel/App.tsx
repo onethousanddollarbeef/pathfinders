@@ -2,23 +2,15 @@ import { useState } from 'react';
 import { useAppState } from './useAppState';
 import { DashboardView } from './components/DashboardView';
 import { ProfileView } from './components/ProfileView';
-import { DiscoverView } from './components/DiscoverView';
-import { CompareView } from './components/CompareView';
-import { PlanView } from './components/PlanView';
 import { TrackerView } from './components/TrackerView';
-import { PageView } from './components/PageView';
 import { AccountView } from './components/AccountView';
 
-export type TabId = 'home' | 'profile' | 'discover' | 'compare' | 'plan' | 'tracker' | 'page' | 'account';
+export type TabId = 'home' | 'profile' | 'tracker' | 'account';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'profile', label: 'Profile' },
-  { id: 'discover', label: 'Discover' },
-  { id: 'compare', label: 'Compare' },
-  { id: 'plan', label: 'Plan' },
-  { id: 'tracker', label: 'Tracker' },
-  { id: 'page', label: 'Page' },
+  { id: 'tracker', label: 'Applications' },
   { id: 'account', label: 'Account' },
 ];
 
@@ -37,22 +29,34 @@ export function App() {
   const activeCount = store.state.applications.filter(
     (application) => application.status === 'saved' || application.status === 'started',
   ).length;
-  const comparisonCount = store.state.settings.comparisonIds.length;
 
   const badgeFor = (id: TabId): number | undefined => {
     if (id === 'tracker' && activeCount > 0) return activeCount;
-    if (id === 'compare' && comparisonCount > 0) return comparisonCount;
     return undefined;
+  };
+
+  const continueToNextPage = () => {
+    const currentIndex = TABS.findIndex((entry) => entry.id === tab);
+    setTab(TABS[(currentIndex + 1) % TABS.length].id);
   };
 
   return (
     <div className="app">
       <header className="app-header">
+        <img className="app-logo" src="/logo.png" alt="Nexus" />
         <div>
-          <h1>ScholarPath</h1>
-          <div className="tagline">Find it, plan it, submit it.</div>
+          <h1>Nexus</h1>
+          <div className="tagline">Find scholarships, track applications, submit faster.</div>
         </div>
         <span className="spacer" />
+        <a
+          className="scholarship-sites"
+          href="https://nexusnext.lovable.app"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Scholarship sites
+        </a>
       </header>
 
       <nav className="tabs">
@@ -74,12 +78,14 @@ export function App() {
 
       {tab === 'home' && <DashboardView store={store} onNavigate={setTab} />}
       {tab === 'profile' && <ProfileView store={store} />}
-      {tab === 'discover' && <DiscoverView store={store} />}
-      {tab === 'compare' && <CompareView store={store} />}
-      {tab === 'plan' && <PlanView store={store} />}
       {tab === 'tracker' && <TrackerView store={store} />}
-      {tab === 'page' && <PageView store={store} />}
       {tab === 'account' && <AccountView store={store} />}
+
+      <footer className="continue-footer">
+        <button type="button" className="btn primary continue-button" onClick={continueToNextPage}>
+          Save and continue
+        </button>
+      </footer>
     </div>
   );
 }

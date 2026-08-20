@@ -39,6 +39,93 @@ function check(label, condition, detail = '') {
   return ok;
 }
 
+const SAMPLE_SCHOLARSHIPS = [
+  {
+    id: 'smoke-1',
+    name: 'STEM Future Leaders Award',
+    sponsor: 'National Science Foundation',
+    amountMin: 1000,
+    amountMax: 2500,
+    renewable: false,
+    deadline: '2026-04-15',
+    recurring: true,
+    url: 'https://example.com/stem-award',
+    categories: ['stem'],
+    description: 'Award for STEM students with leadership experience.',
+    eligibility: [],
+    states: [],
+    tags: ['stem', 'leadership'],
+    requirements: {
+      essayCount: 1,
+      essayWordCounts: [500],
+      essayTopics: ['leadership'],
+      recommendationLetters: 1,
+      transcriptRequired: true,
+      fafsaRequired: false,
+      portfolioRequired: false,
+      interviewRequired: false,
+      videoRequired: false,
+      otherRequirements: [],
+    },
+  },
+  {
+    id: 'smoke-2',
+    name: 'Community Service Scholarship',
+    sponsor: 'Rotary Club',
+    amountMin: 500,
+    amountMax: 1500,
+    renewable: false,
+    deadline: '2026-05-01',
+    recurring: true,
+    url: 'https://example.com/service',
+    categories: ['community'],
+    description: 'Recognizes students who volunteer in their communities.',
+    eligibility: [],
+    states: [],
+    tags: ['community'],
+    requirements: {
+      essayCount: 0,
+      essayWordCounts: [],
+      essayTopics: [],
+      recommendationLetters: 0,
+      transcriptRequired: false,
+      fafsaRequired: false,
+      portfolioRequired: false,
+      interviewRequired: false,
+      videoRequired: false,
+      otherRequirements: [],
+    },
+  },
+  {
+    id: 'smoke-3',
+    name: 'First-Gen College Fund',
+    sponsor: 'Education Trust',
+    amountMin: 2000,
+    amountMax: 5000,
+    renewable: false,
+    deadline: '2026-03-20',
+    recurring: true,
+    url: 'https://example.com/first-gen',
+    categories: ['need-based'],
+    description: 'Support for first-generation college students.',
+    eligibility: [],
+    states: [],
+    tags: ['first-gen', 'need-based'],
+    requirements: {
+      essayCount: 2,
+      essayWordCounts: [250, 500],
+      essayTopics: ['background', 'goals'],
+      recommendationLetters: 2,
+      transcriptRequired: true,
+      fafsaRequired: true,
+      portfolioRequired: false,
+      interviewRequired: false,
+      videoRequired: false,
+      otherRequirements: [],
+    },
+  },
+];
+
 const PROFILE = {
   version: 1,
   updatedAt: Date.now(),
@@ -124,7 +211,7 @@ async function main() {
 
     const workerHandle = await worker.worker();
     const manifest = await workerHandle.evaluate(() => chrome.runtime.getManifest());
-    check('manifest is readable from the worker', manifest.name.startsWith('ScholarPath'), manifest.name);
+    check('manifest is readable from the worker', manifest.name.startsWith('Nexus'), manifest.name);
     check(
       'side panel is registered',
       manifest.side_panel?.default_path === 'sidepanel/index.html',
@@ -132,14 +219,22 @@ async function main() {
     );
 
     // Seed the profile the way the side panel would.
-    await workerHandle.evaluate(async (profile) => {
+    await workerHandle.evaluate(async (profile, scholarships) => {
+      const now = Date.now();
       const current = (await chrome.storage.local.get('scholarpath.state.v1'))['scholarpath.state.v1'] ?? {};
+      const applications = scholarships.map((scholarship) => ({
+        scholarshipId: scholarship.id,
+        status: 'saved',
+        savedAt: now,
+        notes: '',
+        tasks: [],
+      }));
       await chrome.storage.local.set({
         'scholarpath.state.v1': {
           ...current,
           profile,
-          applications: [],
-          customScholarships: [],
+          applications,
+          customScholarships: scholarships,
           settings: {
             autofillEnabled: true,
             confirmBeforeFill: true,
@@ -150,7 +245,7 @@ async function main() {
           },
         },
       });
-    }, PROFILE);
+    }, PROFILE, SAMPLE_SCHOLARSHIPS);
 
     // --- Side panel renders as an extension page -------------------------------
     const panel = await browser.newPage();
@@ -164,59 +259,27 @@ async function main() {
     await panel.waitForSelector('.app-header h1', { timeout: 10000 });
 
     const tabs = await panel.$$eval('.tabs .tab', (nodes) => nodes.map((node) => node.textContent.trim()));
-    check('side panel renders all tabs', tabs.length === 7, tabs.join(', '));
+    check('side panel renders all tabs', tabs.length === 4, tabs.join(', '));
     check('side panel has no page errors', panelErrors.length === 0, panelErrors.join(' | '));
+
+    const headerTitle = await panel.$eval('.app-header h1', (node) => node.textContent.trim());
+    check('header shows Nexus branding', headerTitle === 'Nexus', headerTitle);
+
+    const scholarshipLink = await panel.$eval('.scholarship-sites', (node) => node.href);
+    check('header links to nexusnext.lovable.app', scholarshipLink.includes('nexusnext.lovable.app'), scholarshipLink);
 
     const homeStats = await panel.$$eval('.metric .value', (nodes) => nodes.map((node) => node.textContent.trim()));
     check('home shows computed metrics', homeStats.length >= 3, homeStats.slice(0, 3).join(' / '));
 
-    await clickTab(panel, 'Discover');
-    await panel.waitForSelector('.match-card', { timeout: 5000 });
-    const cardCount = await panel.$$eval('.match-card', (nodes) => nodes.length);
-    check('discover lists matches', cardCount > 0, `${cardCount} cards`);
-
-    const reasons = await panel.evaluate(() => {
-      const details = document.querySelector('.match-card details');
-      details.open = true;
-      return [...details.querySelectorAll('.reasons li span:last-child')].map((node) => node.textContent.trim());
-    });
-    check('matches explain themselves', reasons.length > 0, reasons[0]);
-
-    await panel.$$eval('.match-card', (cards) => {
-      for (const card of cards.slice(0, 3)) {
-        const save = [...card.querySelectorAll('button')].find((button) => button.textContent.includes('Save'));
-        const compare = [...card.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Compare');
-        save?.click();
-        compare?.click();
-      }
-    });
-    await new Promise((done) => setTimeout(done, 400));
-
-    await clickTab(panel, 'Compare');
-    const comparisonRows = await panel.$$eval('table.compare tbody tr td.metric-label', (nodes) =>
-      nodes.map((node) => node.textContent.trim()),
-    );
-    check('comparison table renders every axis', comparisonRows.length >= 9, comparisonRows.join(', '));
-    const bestCells = await panel.$$eval('table.compare td.best', (nodes) => nodes.length);
-    check('comparison highlights the winner per row', bestCells > 0, `${bestCells} highlighted cells`);
-
-    await clickTab(panel, 'Plan');
-    const planItems = await panel.$$eval('.plan-item', (nodes) => nodes.length);
-    const rationale = await panel.$eval('.plan-item p', (node) => node.textContent.trim()).catch(() => '');
-    check('plan produces ranked items', planItems > 0, `${planItems} items`);
-    check('plan explains its ordering', rationale.length > 0, rationale);
-
-    await clickTab(panel, 'Tracker');
+    await clickTab(panel, 'Applications');
     const tracked = await panel.$$eval('.match-card', (nodes) => nodes.length);
-    check('tracker shows saved applications', tracked >= 3, `${tracked} tracked`);
-    const trackerDeadlines = await panel.$$eval('.match-card .sponsor', (nodes) =>
-      nodes.map((node) => node.textContent.trim()),
-    );
-    check(
-      'tracker deadlines match the ones Discover showed',
-      !trackerDeadlines.some((text) => text.includes('closed')),
-      trackerDeadlines.join(' | '),
-    );
+    check('applications tab shows saved applications', tracked >= 3, `${tracked} tracked`);
+
+    await clickTab(panel, 'Account');
+    const accountHeading = await panel.$eval('.card h2', (node) => node.textContent.trim());
+    check('account tab renders sign-in section', accountHeading.includes('Account'), accountHeading);
+    const pageTools = await panel.$eval('.combined-section h2', (node) => node.textContent.trim());
+    check('account tab embeds current page tools', pageTools.includes('Current page'), pageTools);
 
     // --- Autofill on a real form ----------------------------------------------
     const form = await browser.newPage();
@@ -317,7 +380,7 @@ async function main() {
       // looks like, and a full-page capture of the plan can be tall enough to
       // hang the screenshot protocol call.
       try {
-        for (const tab of ['Home', 'Profile', 'Discover', 'Compare', 'Plan', 'Tracker', 'This page']) {
+        for (const tab of ['Home', 'Profile', 'Applications', 'Account']) {
           await clickTab(panel, tab);
           await panel.evaluate(() => document.querySelector('.view')?.scrollTo(0, 0));
           // Headless Chrome stalls when screenshotting a backgrounded tab.

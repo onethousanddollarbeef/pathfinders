@@ -23,7 +23,7 @@ export function DashboardView({ store, onNavigate }: { store: AppStore; onNaviga
           <h2 style={{ margin: 0 }}>Let's find your money</h2>
           <p className="small muted" style={{ margin: '6px 0' }}>
             Fill in your profile, find an application on the web, then save it with the current-page tools under
-            Account. Sign in there to sync your work with the website.
+            Account. Sign in there to sync your work with nexusnext.lovable.app.
           </p>
           <button type="button" className="btn primary" onClick={() => onNavigate('profile')}>
             Start your profile

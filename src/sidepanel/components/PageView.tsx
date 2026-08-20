@@ -14,7 +14,7 @@ async function sendToActiveTab(message: PanelToContentMessage): Promise<ContentR
   } catch {
     return {
       ok: false,
-      error: 'ScholarPath cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
+      error: 'Nexus cannot read this page. Browser pages, the Chrome Web Store and PDFs are off limits — open the scholarship site in a normal tab and try again.',
     };
   }
 }
@@ -23,7 +23,7 @@ async function sendToActiveTab(message: PanelToContentMessage): Promise<ContentR
  * "This page" tab: scans the open tab, previews exactly what would be written
  * where, fills it, and can capture the listing into the catalog.
  */
-export function PageView({ store }: { store: AppStore }) {
+export function PageView({ store, embedded = false }: { store: AppStore; embedded?: boolean }) {
   const [scan, setScan] = useState<FormScan | undefined>();
   const [pageTitle, setPageTitle] = useState('');
   const [pageUrl, setPageUrl] = useState('');
@@ -85,7 +85,7 @@ export function PageView({ store }: { store: AppStore }) {
   };
 
   return (
-    <div className="view">
+    <div className={embedded ? 'embedded-view' : 'view'}>
       <div className="card">
         <div className="spread">
           <h2 style={{ margin: 0 }}>This page</h2>
