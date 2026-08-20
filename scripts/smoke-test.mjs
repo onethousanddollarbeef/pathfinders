@@ -270,6 +270,8 @@ async function main() {
 
     const homeStats = await panel.$$eval('.metric .value', (nodes) => nodes.map((node) => node.textContent.trim()));
     check('home shows computed metrics', homeStats.length >= 3, homeStats.slice(0, 3).join(' / '));
+    const pageToolsHeading = await panel.$eval('.embedded-view h2, .view h2', (node) => node.textContent?.trim() ?? '');
+    check('home embeds current page tools', pageToolsHeading.includes('This page'), pageToolsHeading);
 
     await clickTab(panel, 'Explore');
     await panel.waitForFunction(
@@ -295,8 +297,6 @@ async function main() {
     await panel.click('.auth-forgot');
     const resetHeading = await panel.$eval('.auth-title', (node) => node.textContent.trim());
     check('password reset view opens', resetHeading.includes('Reset your password'), resetHeading);
-    const pageTools = await panel.$eval('.section-heading', (node) => node.textContent.trim());
-    check('account tab embeds current page tools', pageTools.includes('Current page'), pageTools);
 
     // --- Autofill on a real form ----------------------------------------------
     const form = await browser.newPage();

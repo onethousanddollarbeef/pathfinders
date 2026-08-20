@@ -11,6 +11,7 @@ import { SEED_SCHOLARSHIPS } from '../data/scholarships';
 import { loadState } from '../core/storage';
 import { resolveDeadline } from '../core/tracker';
 import type { PanelToContentMessage } from '../shared/messages';
+import { sendToTab as deliverToTab } from '../shared/tabMessaging';
 
 const DEADLINE_ALARM = 'scholarpath:deadline-check';
 const CONTEXT_AUTOFILL = 'scholarpath:autofill';
@@ -95,9 +96,9 @@ async function openPanel(windowId?: number): Promise<void> {
 
 async function sendToTab(tabId: number, message: PanelToContentMessage): Promise<void> {
   try {
-    await chrome.tabs.sendMessage(tabId, message);
+    await deliverToTab(tabId, message);
   } catch {
-    // The content script isn't present on chrome:// pages and PDF viewers.
+    // The content script still cannot run on blocked pages after injection.
   }
 }
 

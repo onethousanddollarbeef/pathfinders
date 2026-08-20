@@ -13,6 +13,8 @@ import { loadState } from '../core/storage';
 import { Overlay, highlightElements } from './overlay';
 import type { ContentResponse, FieldPreview, PanelToContentMessage } from '../shared/messages';
 
+const INIT_KEY = '__nexusContentScriptLoaded';
+
 const DISMISS_KEY = 'scholarpath:dismissed-origins';
 let overlay: Overlay | undefined;
 
@@ -71,6 +73,8 @@ function readablePageText(): string {
 async function handleMessage(message: PanelToContentMessage): Promise<ContentResponse> {
   const state = await loadState();
   switch (message.type) {
+    case 'sp:ping':
+      return { ok: true, type: 'ping' };
     case 'sp:scan-page':
       return {
         ok: true,
@@ -108,19 +112,12 @@ async function handleMessage(message: PanelToContentMessage): Promise<ContentRes
   }
 }
 
-chrome.runtime.onMessage.addListener((message: PanelToContentMessage, _sender, sendResponse) => {
-  handleMessage(message)
-    .then(sendResponse)
-    .catch((error: unknown) => sendResponse({ ok: false, error: String(error) }));
-  return true; // Keep the channel open for the async response.
-});
-
 /** Offers autofill once per host per session, only on pages that look like forms. */
 async function maybeOfferAutofill(): Promise<void> {
   try {
     const state = await loadState();
     if (!state.settings.autofillEnabled) return;
-    if (!state.profile.firstName && !state.profile.email) return; // Nothing to fill with yet.
+    if (!state.profile.firstName && !state.profile.email) return;
     if (await isDismissed()) return;
 
     const scan = scanPage(document, state.profile);
@@ -142,8 +139,19 @@ async function maybeOfferAutofill(): Promise<void> {
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => void maybeOfferAutofill());
-} else {
-  void maybeOfferAutofill();
+if (!(globalThis as Record<string, unknown>)[INIT_KEY]) {
+  (globalThis as Record<string, unknown>)[INIT_KEY] = true;
+
+  chrome.runtime.onMessage.addListener((message: PanelToContentMessage, _sender, sendResponse) => {
+    handleMessage(message)
+      .then(sendResponse)
+      .catch((error: unknown) => sendResponse({ ok: false, error: String(error) }));
+    return true;
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => void maybeOfferAutofill());
+  } else {
+    void maybeOfferAutofill();
+  }
 }

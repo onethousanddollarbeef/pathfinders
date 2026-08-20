@@ -592,6 +592,32 @@ textarea {
   letter-spacing: 0.3px;
 }
 
+.metric-toggle {
+  width: 100%;
+  background: #fffbf7;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 6px;
+  text-align: center;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.metric-toggle:hover {
+  border-color: var(--accent);
+}
+
+.metric-toggle.active {
+  background: var(--accent-soft);
+  border-color: #f0c9a8;
+}
+
+.metric-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .reasons {
   margin: 6px 0 0;
   padding: 0;

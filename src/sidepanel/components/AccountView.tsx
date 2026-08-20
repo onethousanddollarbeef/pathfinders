@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { isEmailVerified } from '../../core/supabase';
 import type { AppStore } from '../useAppState';
-import { PageView } from './PageView';
 
 const NEXUS_WEB_URL = 'https://nexusnext.lovable.app';
 
@@ -252,14 +251,6 @@ export function AccountView({ store }: { store: AppStore }) {
             </div>
           </>
         )}
-      </div>
-
-      <div className="combined-section">
-        <div>
-          <h2 className="section-heading">Current page tools</h2>
-          <p className="small muted">Scan, autofill, or capture the scholarship on your active tab.</p>
-        </div>
-        <PageView store={store} embedded />
       </div>
     </div>
   );

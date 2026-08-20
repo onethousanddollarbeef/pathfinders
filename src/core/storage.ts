@@ -19,6 +19,8 @@ export interface Settings {
   dismissedScholarshipIds: string[];
   comparisonIds: string[];
   onboardingComplete: boolean;
+  /** Per-page override for whether the active tab counts as an application form. Key = page URL. */
+  applicationPageOverrides?: Record<string, boolean>;
 }
 
 export interface AppState {
