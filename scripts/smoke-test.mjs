@@ -290,6 +290,11 @@ async function main() {
       accountHeading.includes('Welcome back') || accountHeading.includes('Create'),
       accountHeading,
     );
+    const forgotPassword = await panel.$eval('.auth-forgot', (node) => node.textContent?.trim() ?? '');
+    check('account tab offers password reset', forgotPassword.includes('Forgot password'), forgotPassword);
+    await panel.click('.auth-forgot');
+    const resetHeading = await panel.$eval('.auth-title', (node) => node.textContent.trim());
+    check('password reset view opens', resetHeading.includes('Reset your password'), resetHeading);
     const pageTools = await panel.$eval('.section-heading', (node) => node.textContent.trim());
     check('account tab embeds current page tools', pageTools.includes('Current page'), pageTools);
 

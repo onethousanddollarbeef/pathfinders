@@ -2,6 +2,7 @@ export const SUPABASE_PROJECT_ID = 'zrqfanveghxodzavjrkb';
 export const SUPABASE_URL = 'https://zrqfanveghxodzavjrkb.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_t6NOr6t__1Sy01GLMVs77w_w35aLL37';
 export const NEXUS_AUTH_REDIRECT_URL = 'https://nexusnext.lovable.app/auth';
+export const NEXUS_PASSWORD_RESET_REDIRECT_URL = `${NEXUS_AUTH_REDIRECT_URL}?mode=reset`;
 
 const SESSION_KEY = 'scholarpath.supabase.session.v1';
 
@@ -82,7 +83,7 @@ function parseAuthError(body: string, status: number): string {
       return 'Confirm your email first — open the link we sent you, then sign in here.';
     }
     if (parsed.error_code === 'invalid_credentials' || message.toLowerCase().includes('invalid login')) {
-      return 'Email or password is incorrect. Try again or reset your password on the website.';
+      return 'Email or password is incorrect. Try again or use Forgot password below.';
     }
     message = parsed.msg ?? parsed.message ?? parsed.error_description ?? message;
   } catch { /* plain-text error */ }
@@ -196,6 +197,20 @@ export async function resendConfirmationEmail(email: string): Promise<string> {
     },
   );
   return `Verification email sent to ${email}. Check your inbox and spam folder.`;
+}
+
+export async function requestPasswordReset(email: string): Promise<string> {
+  await request(
+    `/auth/v1/recover?redirect_to=${encodeURIComponent(NEXUS_PASSWORD_RESET_REDIRECT_URL)}`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email,
+        redirect_to: NEXUS_PASSWORD_RESET_REDIRECT_URL,
+      }),
+    },
+  );
+  return `Password reset link sent to ${email}. Open it in your browser to choose a new password, then sign in here.`;
 }
 
 export async function signIn(email: string, password: string): Promise<SupabaseSession> {
