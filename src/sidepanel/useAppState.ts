@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { matchAll } from '../core/matching';
 import { buildPlan } from '../core/planner';
-import { createTrackedApplication, setStatus, toggleTask } from '../core/tracker';
+import { createTrackedApplication, setStatus, toggleTask, addScholarshipToTracker } from '../core/tracker';
 import { loadState, saveState, subscribeToState } from '../core/storage';
 import { getSession, pullState, pushState, requestPasswordReset, resendConfirmationEmail, signIn, signOut, signUp } from '../core/supabase';
 import type { SupabaseSession } from '../core/supabase';
@@ -31,6 +31,7 @@ export interface AppStore {
   updateProfile: (updater: (profile: StudentProfile) => StudentProfile) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   saveScholarship: (scholarshipId: string) => void;
+  captureAndTrack: (scholarship: Scholarship) => void;
   removeApplication: (scholarshipId: string) => void;
   changeStatus: (scholarshipId: string, status: ApplicationStatus, awardAmount?: number) => void;
   toggleApplicationTask: (scholarshipId: string, taskId: string) => void;
@@ -131,10 +132,6 @@ export function useAppState(): AppStore {
     });
   }, [matches, state]);
 
-  const findScholarship = useCallback(
-    (id: string) => catalog.find((scholarship) => scholarship.id === id),
-    [catalog],
-  );
 
   const updateApplication = useCallback(
     (scholarshipId: string, updater: (application: TrackedApplication) => TrackedApplication) => {
@@ -216,18 +213,30 @@ export function useAppState(): AppStore {
           if (current.applications.some((application) => application.scholarshipId === scholarshipId)) {
             return current;
           }
-          // Prefer the matched copy: its deadline has been rolled to the next
-          // cycle, so the generated task due dates are not already in the past.
           const scholarship =
             matches.find((match) => match.scholarship.id === scholarshipId)?.scholarship ??
-            findScholarship(scholarshipId);
+            current.customScholarships.find((entry) => entry.id === scholarshipId);
           if (!scholarship) return current;
           return {
             ...current,
             applications: [...current.applications, createTrackedApplication(scholarship, current.profile)],
           };
         }),
-      [commit, findScholarship, matches],
+      [commit, matches],
+    ),
+
+    captureAndTrack: useCallback(
+      (scholarship) =>
+        commit((current) => {
+          const tracked = addScholarshipToTracker(
+            current.customScholarships,
+            current.applications,
+            scholarship,
+            current.profile,
+          );
+          return { ...current, ...tracked };
+        }),
+      [commit],
     ),
 
     removeApplication: useCallback(

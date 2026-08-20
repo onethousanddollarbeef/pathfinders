@@ -54,6 +54,27 @@ export function createTrackedApplication(
   };
 }
 
+/** Adds or updates a scholarship and ensures it appears in Applications. */
+export function addScholarshipToTracker(
+  customScholarships: Scholarship[],
+  applications: TrackedApplication[],
+  scholarship: Scholarship,
+  profile: StudentProfile,
+  now: number = Date.now(),
+): { customScholarships: Scholarship[]; applications: TrackedApplication[] } {
+  const nextCatalog = [
+    ...customScholarships.filter((entry) => entry.id !== scholarship.id),
+    scholarship,
+  ];
+  if (applications.some((application) => application.scholarshipId === scholarship.id)) {
+    return { customScholarships: nextCatalog, applications };
+  }
+  return {
+    customScholarships: nextCatalog,
+    applications: [...applications, createTrackedApplication(scholarship, profile, now)],
+  };
+}
+
 export function setStatus(
   application: TrackedApplication,
   status: ApplicationStatus,

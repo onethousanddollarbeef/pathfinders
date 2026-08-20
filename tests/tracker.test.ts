@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTrackedApplication, progress, resolveDeadline, setStatus, toggleTask, trackerStats } from '@/core/tracker';
+import { createTrackedApplication, progress, resolveDeadline, setStatus, toggleTask, trackerStats, addScholarshipToTracker } from '@/core/tracker';
 import { makeProfile, makeScholarship, NOW } from './helpers';
 
 const scholarship = makeScholarship({
@@ -149,5 +149,25 @@ describe('trackerStats', () => {
     const application = { ...createTrackedApplication(scholarship, profile, NOW), deadlineOverride: '2026-06-01' };
     const stats = trackerStats([application], [scholarship], NOW);
     expect(stats.dueSoon).toHaveLength(0);
+  });
+});
+
+describe('addScholarshipToTracker', () => {
+  it('adds the scholarship and a saved application in one step', () => {
+    const profile = makeProfile();
+    const next = addScholarshipToTracker([], [], scholarship, profile, NOW);
+    expect(next.customScholarships).toHaveLength(1);
+    expect(next.applications).toHaveLength(1);
+    expect(next.applications[0].scholarshipId).toBe(scholarship.id);
+    expect(next.applications[0].status).toBe('saved');
+  });
+
+  it('updates an existing scholarship without duplicating the application', () => {
+    const profile = makeProfile();
+    const first = addScholarshipToTracker([], [], scholarship, profile, NOW);
+    const updated = { ...scholarship, name: 'Renamed award' };
+    const second = addScholarshipToTracker(first.customScholarships, first.applications, updated, profile, NOW);
+    expect(second.customScholarships[0].name).toBe('Renamed award');
+    expect(second.applications).toHaveLength(1);
   });
 });
