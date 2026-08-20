@@ -119,6 +119,8 @@ describe('captureScholarship', () => {
     const thin = captureScholarship({ url: 'https://example.org/x', title: 'Some Award', text: 'Apply now!' }, NOW);
     expect(thin.uncertainFields).toContain('amount');
     expect(thin.uncertainFields).toContain('deadline');
+    expect(thin.draft.amountUnknown).toBe(true);
+    expect(thin.draft.url).toBe('https://example.org/x');
     expect(thin.draft.deadline > '2026-01-15').toBe(true);
   });
 });

@@ -245,6 +245,7 @@ export function captureScholarship(input: CaptureInput, now: number = Date.now()
     url: input.url,
     amountMin: amounts?.min ?? 0,
     amountMax: amounts?.max ?? 0,
+    amountUnknown: !amounts,
     renewable: /\brenewable\b/i.test(text),
     deadline: deadline ?? fallbackDeadline,
     recurring: /\bannual|every year|yearly\b/i.test(text),

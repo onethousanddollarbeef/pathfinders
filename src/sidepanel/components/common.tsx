@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { formatDeadline } from '../../core/dates';
 import { effortBand } from '../../core/effort';
-import { totalAwardValue } from '../../core/matching';
+import { formatAward } from '../../core/matching';
 import type { MatchResult, MatchVerdict, RuleEvaluation } from '../../core/types';
 
 export function money(value: number): string {
@@ -90,7 +90,7 @@ export function MatchMetrics({ match }: { match: MatchResult }) {
   return (
     <div className="metric-grid">
       <div className="metric">
-        <span className="value">{money(totalAwardValue(match.scholarship))}</span>
+        <span className="value">{formatAward(match.scholarship)}</span>
         <span className="label">Award</span>
       </div>
       <div className="metric">

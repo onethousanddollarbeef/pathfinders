@@ -216,6 +216,8 @@ export interface Scholarship {
   /** Award value in USD. `amountMax` may exceed `amountMin` for ranged awards. */
   amountMin: number;
   amountMax: number;
+  /** Set when capture could not read an award amount — URL and tracking still work. */
+  amountUnknown?: boolean;
   renewable: boolean;
   renewableYears?: number;
   numberOfAwards?: number;

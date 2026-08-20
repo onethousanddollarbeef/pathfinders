@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { formatDeadline } from '../../core/dates';
-import { averageAward } from '../../core/matching';
+import { averageAward, formatAward } from '../../core/matching';
 import { STATUS_LABELS, progress, resolveDeadline, trackerStats } from '../../core/tracker';
 import { Chip, EmptyState, Progress, money } from './common';
 import type { AppStore } from '../useAppState';
@@ -126,6 +126,11 @@ function ApplicationCard({
         <div>
           <h3>{scholarship.name}</h3>
           <div className="sponsor">{formatDeadline(resolveDeadline(application, scholarship))}</div>
+          {scholarship.url && (
+            <a className="small link" href={scholarship.url} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all' }}>
+              {scholarship.url}
+            </a>
+          )}
         </div>
         <Chip tone={statusTone(application.status)}>{STATUS_LABELS[application.status]}</Chip>
       </div>
@@ -135,7 +140,7 @@ function ApplicationCard({
       </div>
       <div className="small muted">
         {Math.round(completion * 100)}% complete · {remaining.length} task(s) left ·{' '}
-        {remaining.reduce((sum, task) => sum + task.estimatedHours, 0).toFixed(1)} hrs · worth {money(averageAward(scholarship))}
+        {remaining.reduce((sum, task) => sum + task.estimatedHours, 0).toFixed(1)} hrs · worth {formatAward(scholarship)}
       </div>
 
       <details style={{ marginTop: 8 }}>
