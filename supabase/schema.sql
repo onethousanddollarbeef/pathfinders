@@ -1,22 +1,19 @@
--- Run this once in the Supabase SQL editor. The Nexus website (nexusnext.lovable.app)
--- and extension can then read/write the same JSON document for the authenticated user.
-create table if not exists public.scholarpath_states (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  state jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
+-- Nexus shares Supabase with nexusnext.lovable.app.
+-- The website already uses profiles, scholarships, user_scholarships, and related tables.
+-- This file documents the extension sync model; run only if you are bootstrapping a fresh project.
 
-alter table public.scholarpath_states enable row level security;
+-- Profiles: one row per auth user (id matches auth.users.id)
+-- Columns used by the extension: id, email, full_name, gpa, major, grade_level, state,
+-- phone, school, graduation_year, fafsa_completed, demographics (jsonb extension payload)
 
-create policy "Users can read their Nexus state"
-  on public.scholarpath_states for select
-  using (auth.uid() = user_id);
+-- User scholarships: tracks saved/started/submitted per user
+-- Status values: saved, started, planning, submitted
 
-create policy "Users can create their Nexus state"
-  on public.scholarpath_states for insert
-  with check (auth.uid() = user_id);
+-- Scholarships: public catalog for Explore tab (extension reads with publishable key)
 
-create policy "Users can update their Nexus state"
-  on public.scholarpath_states for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+-- Optional legacy blob table (NOT used by nexusnext.lovable.app):
+-- create table if not exists public.scholarpath_states (
+--   user_id uuid primary key references auth.users(id) on delete cascade,
+--   state jsonb not null default '{}'::jsonb,
+--   updated_at timestamptz not null default now()
+-- );

@@ -11,7 +11,7 @@ import { matchAll } from '../core/matching';
 import { buildPlan } from '../core/planner';
 import { createTrackedApplication, setStatus, toggleTask } from '../core/tracker';
 import { loadState, saveState, subscribeToState } from '../core/storage';
-import { getSession, pullState, pushState, resendConfirmationEmail, signIn, signOut, signUp } from '../core/supabase';
+import { getSession, pullState, pushState, resendConfirmationEmail, signIn, signOut, signUp, ensureRemoteProfile } from '../core/supabase';
 import type { SupabaseSession } from '../core/supabase';
 import type { AppState, Settings } from '../core/storage';
 import type {
@@ -65,10 +65,9 @@ export function useAppState(): AppStore {
       }
       setSyncStatus('syncing');
       try {
-        const remote = await pullState(restoredSession);
-        const next = remote ?? loaded;
-        if (remote) await saveState(remote);
-        else await pushState(restoredSession, loaded);
+        const next = await pullState(restoredSession, loaded);
+        await saveState(next);
+        await pushState(restoredSession, next);
         if (active) {
           setState(next);
           setSyncStatus('synced');
@@ -158,10 +157,10 @@ export function useAppState(): AppStore {
       setSyncStatus('syncing');
       const nextSession = await signIn(email, password);
       const local = state ?? await loadState();
-      const remote = await pullState(nextSession);
-      const next = remote ?? local;
-      if (remote) await saveState(remote);
-      else await pushState(nextSession, local);
+      const remote = await pullState(nextSession, local);
+      const next = remote;
+      await saveState(next);
+      await pushState(nextSession, next);
       setSession(nextSession);
       setState(next);
       setSyncStatus('synced');
@@ -172,6 +171,7 @@ export function useAppState(): AppStore {
       const result = await signUp(email, password);
       if (result.session) {
         const local = state ?? await loadState();
+        await ensureRemoteProfile(result.session, local);
         await pushState(result.session, local);
         setSession(result.session);
         setSyncStatus('synced');
